@@ -2,330 +2,536 @@
 
 #include "DTFluxSubsystem/DTFluxSubsystem.h"
 #include "DTFluxProjectSettings/DTFluxProjectSettings.h"
+#include "DTFluxWebSocket/DTFluxWebsocketServer.h"
+
 #include "DTFluxModel/DTFluxModel.h"
 #include "HttpServerModule.h"
 #include "HttpRouteHandle.h"
 #include "DTFluxAPILog.h"
+#include "DTFluxDataStorage/DTFluxDataStorage.h"
 #include "IHttpRouter.h"
 #include "HttpModule.h"
 #include "JsonObjectConverter.h"
 #include "Interfaces/IHttpResponse.h"
-
-// TODO: Not implemented
-bool UDTFluxSubsystem::OnRequest(const FHttpServerRequest& Request)
+// DEPRECATED : Now in WS
+FString FDTFluxSubsystemAPISettings::GetRaceDataEndpoint(const FDTFluxSubsystemAPISettings* Settings)
 {
-	return true;
+	if(Settings)
+	{
+		FString RaceDataEndpoint = 
+			FString::Printf(TEXT("%s/%p"), *Settings->GetProxyBaseEndpoint(), Settings->ProxyEndpoints.FindKey("race-datas"));
+		UE_LOG(LogDTFluxAPI, Log, TEXT("Proxy Race Data -> %s"), *RaceDataEndpoint);
+		return RaceDataEndpoint;
+	}
+	return FString("");
 }
-// TODO: Not implemented
-void UDTFluxSubsystem::HandleRequest(const FString& Route,const FHttpServerRequest& Request, FHttpResultCallback OnComplete)
+// DEPRECATED : Now in WS
+FString FDTFluxSubsystemAPISettings::GetContestRankingEndpoint(const FDTFluxSubsystemAPISettings* Settings, const int ContestId)
 {
-	// creating payload string
-	FString ReqPayload;
-	if (Request.Body.Num() > 0)
+	if(Settings)
 	{
-		const std::string RawBody((char*)Request.Body.GetData(), Request.Body.Num());
-		ReqPayload = UTF8_TO_TCHAR(RawBody.c_str());
+		FString Ranking = *Settings->ProxyEndpoints.FindKey("ranking");
+		const TCHAR* ContestIDTmpl = *FString("{:ContestID}");
+		const TCHAR* ContestIDValue = *FString(TEXT("%i"),ContestId);
+		FString ContestRanking = Ranking.Replace(ContestIDTmpl, ContestIDValue );
+		FString ContestRankingEndpoint = Settings->GetProxyBaseEndpoint() + ContestRanking;
+		UE_LOG(LogDTFluxAPI, Log, TEXT("Proxy Contest Ranking -> %s"), *ContestRankingEndpoint);
+		return ContestRankingEndpoint;
 	}
-	TSharedPtr<FJsonObject> JsonPayload;
-	if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(ReqPayload), JsonPayload))
+	return FString("");
+}
+// DEPRECATED : Now in WS
+FString FDTFluxSubsystemAPISettings::GetStageRankingEndpoint(const FDTFluxSubsystemAPISettings* Settings, const int ContestId,
+	const int StageId)
+{
+	if(Settings)
 	{
-		UE_LOG(LogDTFluxAPI, Error, TEXT("unable to parse JSON Payload\n%s"), *ReqPayload);
+		FString StageRanking = GetContestRankingEndpoint(Settings, ContestId);
+		StageRanking = FString::Printf(TEXT("%s/stage/%i/"), *StageRanking, StageId);
+		UE_LOG(LogDTFluxAPI, Log, TEXT("Proxy Stage Ranking -> %s"), *StageRanking);
+		return StageRanking;
 	}
-	//Checking path
-
-	UE_LOG(LogDTFluxAPI,Log, TEXT("Request Received for Route %s"), *Route);
-
-		// EventStart
-	if(Route == TEXT("/event/start"))
-	{
-		FDTFluxStartStagePayload StartStagePayload;
-		FJsonObjectConverter::JsonObjectToUStruct<FDTFluxStartStagePayload>(JsonPayload.ToSharedRef(), &StartStagePayload, 0, 0);
-		OnEventStartReceived.Broadcast(StartStagePayload);
+	return FString("");
+}
+// DEPRECATED : Now in WS
+FString FDTFluxSubsystemAPISettings::GetStageRankingFilteredEndpoint(const FDTFluxSubsystemAPISettings* Settings,
+	const int ContestId, const int StageId, const FString SplitName)
+{
+	if (Settings){
+		FString StageRanking = GetStageRankingEndpoint(Settings, ContestId, StageId);
+		StageRanking = FString::Printf(TEXT("%s?splitname=%s"), *StageRanking, *SplitName);
+		UE_LOG(LogDTFluxAPI, Log, TEXT("Proxy Stage Ranking with Splitname -> %s"), *StageRanking);
+		return StageRanking;
 	}
-	else if(Route == TEXT("/team/create"))
-	{
-		// /team/create route
-	}
-	else if(Route == TEXT("/team/update"))
-	{
-		// /team/create route
-	}	else if(Route == TEXT("/team/create"))
-	{
-		// /team/create route
-	}
-	// Default Route
-	else
-	{
-		
-	}
-
-	//Preparing Response Header
-	TUniquePtr<FHttpServerResponse> Response = CreateHttpServerResponse();
-
-	// Adding Response Body
-	FDTFluxResponseBody RespBody;
-	RespBody.Success = TEXT("OK");
-	std::string RespBody_c;
-	RespBody_c = TCHAR_TO_UTF8(*RespBody.Deserialize());
-	Response->Body.Append((const uint8*)RespBody_c.c_str(), RespBody_c.length());
-	// Return the response
-	OnComplete(MoveTemp(Response));
-
+	return FString("");
 }
 
-void UDTFluxSubsystem::OnUpdateStartList(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
+// DEPRECATED : Now in WS
+FString FDTFluxSubsystemAPISettings::GetTeamsEndpoint(const FDTFluxSubsystemAPISettings* Settings)
 {
-	if (!bWasSuccessful || !Response.IsValid())
+	if(Settings)
 	{
-		UE_LOG(LogDTFluxAPI, Error, TEXT("RaceResult Request failed"));
-		return;
+		FString TeamsEndpoint = 
+			FString::Printf(TEXT("%s/%p"), *Settings->GetProxyBaseEndpoint(), Settings->ProxyEndpoints.FindKey("teams"));
+		UE_LOG(LogDTFluxAPI, Log, TEXT("Proxy Teams -> %s"), *TeamsEndpoint );
+		return TeamsEndpoint;
 	}
-	// Tricks because Payload root is an array
-	const FString ModifiedData = FString::Printf(TEXT("{\"Participants\":%s}"), *Response->GetContentAsString());
-	TSharedPtr<FJsonObject> Payload;
-	if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(ModifiedData), Payload))
-	{
-		UE_LOG(LogDTFluxAPI, Error, TEXT("unable to parse JSON Payload****"));
-	}else
-	{
-		FDTFluxStartListPayload StartList;
-		if (FJsonObjectConverter::JsonObjectToUStruct<FDTFluxStartListPayload>(Payload.ToSharedRef(), &StartList, 0, 0))
-		{
-			UE_LOG(LogDTFluxAPI, Log, TEXT("Success Reading"))
-
-		for(const auto& Participant : StartList.Participants)
-		{
-			// Creating a new Contest
-				if(!Contests.Contests.Contains(Participant.ContestName))
-				{
-					FDTFluxContest NewContest;
-					NewContest.ContestID = Participant.ContestID;
-					NewContest.ContestName = Participant.ContestName;
-					Contests.Contests.Add(Participant.ContestName, NewContest);
-				}
-				FDTFluxContest* CurrentContest = Contests.Contests.Find(Participant.ContestName);
-			
-				FDTFluxTeam Team;
-				Team.Bib = Participant.Bib;
-				FDTFluxParticipant ContestParticipant;
-				ContestParticipant.FirstName = Participant.FirstName;
-				ContestParticipant.LastName = Participant.LastName;
-				ContestParticipant.Gender = Participant.Gender;
-				ContestParticipant.Club = Participant.Club;
-				ContestParticipant.Category = Participant.Category;
-
-				Team.Participants.Add(ContestParticipant);
-				// if we have LastName2 it is a two personne Team
-				if(Participant.LastName2 != "")
-				{
-					FDTFluxParticipant ContestParticipant2;
-					ContestParticipant2.FirstName = Participant.FirstName2;
-					ContestParticipant2.LastName = Participant.LastName2;
-					ContestParticipant2.Gender = Participant.Gender2;
-					ContestParticipant2.Club = Participant.Club2;
-					ContestParticipant2.Category = Participant.Category;
-					Team.Participants.Add(ContestParticipant);
-					Team.TeamName = Participant.TeamName;
-					UE_LOG(LogDTFluxAPI, Log, TEXT("Participant is a team : TeamName \"%s\" "), *Team.TeamName);
-				}
-				else
-				{
-					Team.TeamName = Participant.FirstName + TEXT(" ") + Participant.LastName.ToUpper();
-				}
-			// check if Participant already exists
-
-				if(!CurrentContest->TeamAlreadyExist(Team))
-				{
-					// Add it to the TeamList
-					CurrentContest->AddTeam(Team);
-					UE_LOG(LogDTFluxAPI, Log, TEXT("Adding Team  \"%s\" "), *Team.TeamName);
-				}
-
-			}
-			UE_LOG(LogDTFluxAPI, Log, TEXT("Contest has now %i elements"), Contests.Contests.Num());
-
-
-		}
-		else
-		{
-			UE_LOG(LogDTFluxAPI, Error, TEXT("Error Deserializing Payload \n*%s*\n"), *ModifiedData);
-
-		}
-	}
-	for(const auto& Element : Contests.Contests)
-	{
-		UE_LOG(LogDTFluxAPI, Log, TEXT("Contest %s"), *Element.Key);
-		FDTFluxContest Contest = Element.Value;
-		UE_LOG(LogDTFluxAPI, Log, TEXT("Number of participants in this contest %i"), Contest.TeamParticipants.Num());
-
-	}
-	
+	return FString("");
 }
 
-TUniquePtr<FHttpServerResponse> UDTFluxSubsystem::CreateHttpServerResponse() const
-{
-	// Create a Response to be returned by the server
-	TUniquePtr<FHttpServerResponse> Response = MakeUnique<FHttpServerResponse>();
-	Response->Code = EHttpServerResponseCodes::Ok;
-	// Response Header
-	Response->Headers.Add(TEXT("Content-Type"), { TEXT("application/json;charset=utf-8") });
-	Response->Headers.Add(TEXT("Access-Control-Allow-Origin"), { TEXT("*") });
-	Response->Headers.Add(TEXT("Access-Control-Allow-Methods"), { TEXT("GET,POST,PUT,PATCH,DELETE,OPTIONS") });
-	Response->Headers.Add(TEXT("Access-Control-Allow-Headers"), { TEXT("Origin,X-Requested-With,Content-Type,Accept") });
-	Response->Headers.Add(TEXT("Access-Control-Max-Age"), { TEXT("600") });
-	Response->Headers.Add(TEXT("Access-Control-Allow-Credentials"), { TEXT("true") });
-	Response->Headers.Add(TEXT("Server"), { TEXT("UE 5.4.1 EMBBEDED") });
+/****
+ * DTFlux subsystem 
+ ****/
 
-	return Response;
-}
 
 void UDTFluxSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-	mSettings = UDTFluxProjectSettings::GetDTFluxAPIProjectSettings();
-	if(mSettings)
-	{
-		// Setting up request		
-		HttpRequest = &FHttpModule::Get();
-		HttpRouter = FHttpServerModule::Get().GetHttpRouter(mSettings->InPort);
-		if(!HttpRouter)
-		{
-			UE_LOG(LogDTFluxAPI, Type::Error, TEXT("Invalid Http Router for port : %i"), mSettings->InPort)
-		}
-		// Setting Up Routes
-		for(const TArray<FString> Routes = mSettings->Endpoints; const FString& Route : Routes)
-		{
-			const FHttpRequestHandler OptionRequestHandler = FHttpRequestHandler::CreateLambda([this](const FHttpServerRequest &Request, const FHttpResultCallback& OnComplete)
-			{
-				OnComplete(CreateHttpServerResponse());
-				return true;
-			});
-			FHttpRouteHandle OptionRouteHandle = HttpRouter->BindRoute(Route, EHttpServerRequestVerbs::VERB_OPTIONS, OptionRequestHandler);
-			HttpMountedMap.Add(Route + TEXT("HTTPOption"), OptionRouteHandle);
+	const UDTFluxProjectSettings* Settings = GetSettings();
+	LoadConfig(Settings);
+	WsClient = NewObject<UDTFluxWebSocketClient>(this, UDTFluxWebSocketClient::StaticClass());
+	WsClient->OnConnectionConnected.AddDynamic(this, &UDTFluxSubsystem::WsConnected );
+	WsClient->OnConnectionClosed.AddDynamic(this, &UDTFluxSubsystem::WsConnectionClosed );
+	WsClient->OnConnectionError.AddDynamic(this, &UDTFluxSubsystem::WsConnectionError );
+	WsClient->OnReceivedMessage.AddDynamic(this, &UDTFluxSubsystem::WsReceivedMessage );
+	UE_LOG(LogDTFluxAPI, Log, TEXT("Trying to connect to %s:%i"), *SubSettings.WebsocketAddress, SubSettings.WebsocketPort);
+	WsClient->Connect(SubSettings.WebsocketAddress, SubSettings.WebsocketPort);
 
-			const FHttpRequestHandler RequestHandler = FHttpRequestHandler::CreateLambda([this, Route](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete)
-			{
-				// Processing Request to Raw OnRequestReceived firing
-				FDTFluxHttpServerHeaders Headers;
-				for(const auto &Header: Request.Headers)
-				{
-					Headers.Headers.Add(Header.Key, FString::Join(Header.Value, TEXT(",")));
-				}
-				FDTFluxHttpServerParams Params;
-				Params.Params = Request.QueryParams;
-					
-				FDTFluxHttpServerBody Payload;
-				Payload.ReqBody = Request.Body;
+	DataStorage = NewObject<UDTFluxDataStorage>();
+	FDateTime Now = FDateTime::Now();
+	FDateTime Send1Min = Now + FTimespan::FromMinutes(1);
+	UE_LOG(LogDTFluxAPI, Log, TEXT("TEST timer timeSpan Duration : %s"), *Send1Min.ToString());
 
-				// Raw broadcasting Received event
-				OnRequestReceived.Broadcast(Headers, Params, Payload);
-				HandleRequest(Route, Request, OnComplete);
-				return true;
-			});
-			// Binding Routes
-			FHttpRouteHandle RouteHandle = HttpRouter->BindRoute(Route, EHttpServerRequestVerbs::VERB_POST, RequestHandler);
-			HttpMountedMap.Add(Route, RouteHandle);
-		}
-
-	}
+	// SetTimerEvent( Send1Min );
 	
+	// WsServer Event binding
 }
 
 void UDTFluxSubsystem::Deinitialize()
 {
-	StopServer();
-	UE_LOG(LogDTFluxAPI, Log, TEXT("Route Num %i"), HttpMountedMap.Num());
-	for( auto const& Route: HttpMountedMap)
+	if(WsClient)
 	{
-		HttpRouter->UnbindRoute(Route.Value);
+		UE_LOG(LogDTFluxAPI, Log, TEXT("WsClient not null"));
 	}
-	HttpMountedMap.Empty();
-	HttpRouter.Reset();
+	else
+		UE_LOG(LogDTFluxAPI, Log, TEXT("WsClient has been GC'ed"));
+
 	Super::Deinitialize();
 }
 
-TArray<FString> UDTFluxSubsystem::GetMountedRoutes() const
+bool UDTFluxSubsystem::ReloadSubsystem()
 {
-	TArray<FString> Mounted = TArray<FString>();
-	for(const auto Route : HttpMountedMap)
+	return Reconnect();
+}
+
+bool UDTFluxSubsystem::Reconnect()
+{
+	bool Result = WsClient->Close();
+	if(!WsClient->IsConnected())
+		return WsClient->Connect( SubSettings.WebsocketAddress, SubSettings.WebsocketPort);
+	return false;
+}
+
+void UDTFluxSubsystem::LoadConfig(const UDTFluxProjectSettings* Settings)
+{
+	SubSettings.WebsocketPort = Settings->WebsocketServerPort;
+	SubSettings.WebsocketAddress = Settings->WebsocketServerAddress;
+	SubSettings.ProxyAddress = Settings->ProxyAddress;
+	SubSettings.ProxyPort = Settings->ProxyPort;
+	TMap<FString,FString> SettingsEndpoints;
+	SettingsEndpoints.Add(FString("race-data"), Settings->ProxyRaceDataEndpoint);
+	SettingsEndpoints.Add(FString("contest-ranking"), Settings->ProxyRankingEndpoint);
+	SettingsEndpoints.Add(FString("stage-ranking"), Settings->ProxyRankingEndpoint);
+	SettingsEndpoints.Add(FString("team-list"), Settings->ProxyTeamsEndpoint);
+	SubSettings.ProxyEndpoints = SettingsEndpoints;
+}
+
+// Get project Settings
+const UDTFluxProjectSettings* UDTFluxSubsystem::GetSettings()
+{
+	if(const UDTFluxProjectSettings* Settings = UDTFluxProjectSettings::GetDTFluxAPIProjectSettings())
+		return Settings;
+	else
 	{
-		Mounted.Add(Route.Key);
+		UE_LOG(LogDTFluxAPI, Error, TEXT("Unable to get DTFlux API settings"));
+		return nullptr;
 	}
-	return Mounted;
 }
 
-void UDTFluxSubsystem::StartServer()
+// tick function
+void UDTFluxSubsystem::Tick(float DeltaTime)
 {
-	if(bIsListening){return ;}
-	FHttpServerModule::Get().StartAllListeners();
-	bIsListening = true;
-	OnServerListening.Broadcast();
-}
-
-TArray<FDTFluxTeam> UDTFluxSubsystem::GetParticipantsByContestId(const int ContestId)
-{
-	if(Contests.Contests.Num() != 0)
+	if(Timer.Num() > 0)
 	{
-		FString ContestName = Contests.GetContestName(ContestId);
-		UE_LOG(LogDTFluxAPI, Log, TEXT("Getting Participants for Contest %s"), *ContestName);
-		return GetParticipantsByContestName(ContestName);
+		TArray<FDateTime> Done;
+		for(auto const& El : Timer)
+		{
+			FDateTime Dt = FDateTime::Now();
+			if(Dt >= El.Key)
+			{
+				El.Value.Execute(TEXT("Tick"));
+				OnTimerTriggered.Broadcast();
+				UE_LOG(LogDTFluxAPI, Log, TEXT("Execution"));
+				UE_LOG(LogDTFluxAPI, Log, TEXT("TICK : exec time: %lld == %lld"), El.Key.GetTicks(), Dt.GetTicks());
+				Done.Add(El.Key);
+			}
+
+		}
+		if(Done.Num() > 0)
+		{
+			UE_LOG(LogDTFluxAPI, Log, TEXT("TICK : Cleaning %i"), Done.Num());
+			for(auto const& ToDelete: Done)
+			{
+				Timer.Remove(ToDelete);
+			}
+		}
+			// UE_LOG(LogDTFluxAPI, Log, TEXT("TICK : Timer Length=%i"), Timer.Num());
+	}
+}
+
+// TODO: IMPLEMENT THIS METHOD
+void UDTFluxSubsystem::WsSplitSensorReceivedInternal()
+{
+}
+// TODO: IMPLEMENT THIS METHOD
+void UDTFluxSubsystem::WsTeamUpdateReceivedInternal()
+{
+}
+// TODO: IMPLEMENT THIS METHOD
+void UDTFluxSubsystem::WsStatusUpdateReceivedInternal()
+{
+}
+
+void UDTFluxSubsystem::RequestRaceDatas()
+{
+	WsClient->SendMessage(TEXT("{\"path\": \"race-datas\"}"));
+}
+
+void UDTFluxSubsystem::RequestTeamList()
+{
+	WsClient->SendMessage(TEXT("{\"path\": \"team-list\"}"));
+}
+
+void UDTFluxSubsystem::RequestContestRanking(const int ContestId)
+{
+	const FString Request = FString::Printf(TEXT("{\"path\": \"contest-ranking\", \"contestID\" : %i}"), ContestId);
+	WsClient->SendMessage(Request);
+}
+
+void UDTFluxSubsystem::RequestStageRanking(const int ContestId, const int StageId)
+{
+	const FString Request = FString::Printf(TEXT("{\"path\": \"stage-ranking\", \"contestID\" : %i, \"stageID\" : %i}"), ContestId, StageId);
+	WsClient->SendMessage(Request);
+}
+
+void UDTFluxSubsystem::RequestSplitGaps(const int ContestId, const int StageId, const int SplitId)
+{
+	const FString Request =
+		FString::Printf(TEXT("{\"path\": \"stage-ranking\", \"contestID\" : %i, \"stageID\" : %i, \"splitID\" : %i}"),
+			ContestId, StageId, SplitId);
+
+	WsClient->SendMessage(Request);
+}
+
+void UDTFluxSubsystem::UpdateRaceData()
+{
+	RequestRaceDatas();
+}
+
+void UDTFluxSubsystem::UpdateTeamList()
+{
+	RequestTeamList();
+}
+
+void UDTFluxSubsystem::UpdateTeam()
+{
+}
+
+
+
+void UDTFluxSubsystem::UpdateContestRanking(const int ContestID)
+{
+	RequestContestRanking(ContestID);
+}
+
+void UDTFluxSubsystem::UpdateStageRanking(const int ContestID, const int StageID, const int SplitID)
+{
+	if(SplitID == -1)
+	{
+		RequestStageRanking(ContestID, StageID);
 	}
 	else
 	{
-		UE_LOG(LogDTFluxAPI, Error, TEXT("No Contest Yet !!!!"));
-		TArray<FDTFluxTeam> EmptyTeam;
-		return EmptyTeam;
+		RequestSplitGaps(ContestID, StageID, SplitID);
 	}
-
 }
 
-TArray<FDTFluxTeam> UDTFluxSubsystem::GetParticipantsByContestName(const FString ContestName)
+
+
+
+EDTFluxResponseType UDTFluxSubsystem::FindResponseType(const FString& MessageReceived)
 {
-	if(Contests.Contests.Num() != 0)
+	EDTFluxResponseType ResponseType = UnknownResponse;
+	TSharedPtr<FJsonValue> JsonValue;
+
+	// Create a reader pointer to read the json data
+	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(MessageReceived);
+	if (FJsonSerializer::Deserialize(Reader, JsonValue))
 	{
-		return Contests.Contests[ContestName].TeamParticipants;
+		// Get the value of the json object by field name
+		TSharedPtr<FJsonObject> Json = JsonValue->AsObject();
+		//Test
+		FString Type = Json->GetStringField(TEXT("type"));
+		if(Type == "")
+		{
+			// UE_LOG(LogDTFluxAPI, Log, TEXT("Type tupe does not exist"));
 
+			return EDTFluxResponseType::UnknownResponse;
+		}
+		if(Type.Contains("race-datas"))
+		{
+			// TODO : check if object data are valid
+			FDTFluxRaceDataResponse RaceDataResponse;
+			if(!FJsonObjectConverter::JsonObjectToUStruct<FDTFluxRaceDataResponse>
+				(Json.ToSharedRef(), &RaceDataResponse))
+			{
+				UE_LOG(LogDTFluxAPI, Error, TEXT("Message %s is not a valid \"race-data\" object"), *MessageReceived);
+				return EDTFluxResponseType::UnknownResponse;
+			}
+			UE_LOG(LogDTFluxAPI, Log, TEXT("Message %s is valid race-data object"), *MessageReceived);
+			ProcessRaceDataResponse(RaceDataResponse);
+			return EDTFluxResponseType::RaceData;
+		}
+		if(Type.Contains("constest-ranking"))
+		{
+			FDTFluxContestRankingResponse ContestRankingResponse;
+			if(!FJsonObjectConverter::JsonObjectToUStruct<FDTFluxContestRankingResponse>
+				(Json.ToSharedRef(), &ContestRankingResponse))
+			{
+				UE_LOG(LogDTFluxAPI, Error, TEXT("Message %s is not a valid \"contest-ranking\" object"), *MessageReceived);
+			}
+			// TODO : check if object data are valid
+			UE_LOG(LogDTFluxAPI, Log, TEXT("Message %s is valid \"contest-ranking\" object"), *MessageReceived);
+			ProcessContestRankingResponse(ContestRankingResponse);
+			return EDTFluxResponseType::ContestRanking;
+		}
+		if(Type.Contains("stage-ranking"))
+		{
+			FDTFluxStageRankingResponse StageRankingResponse;
+			if(!FJsonObjectConverter::JsonObjectToUStruct<FDTFluxStageRankingResponse>
+				(Json.ToSharedRef(), &StageRankingResponse))
+			{
+				UE_LOG(LogDTFluxAPI, Error, TEXT("Message %s is not a valid \"stage-ranking\" object"), *MessageReceived);
+			}
+			UE_LOG(LogDTFluxAPI, Log, TEXT("Message %s is valid \"stage-ranking\" object"), *MessageReceived);
+			if(StageRankingResponse.SplitID == -1)
+			{
+				ProcessSplitRankingResponse(StageRankingResponse);
+				return EDTFluxResponseType::SplitRanking;
+
+			}
+			ProcessStageRankingResponse(StageRankingResponse);
+			return EDTFluxResponseType::StageRanking;
+		}
+		if(Type.Contains("team-list"))
+		{
+			FDTFluxTeamListResponse TeamListResponse;
+			if( !FJsonObjectConverter::JsonObjectToUStruct
+				<FDTFluxTeamListResponse>(Json.ToSharedRef(), &TeamListResponse))
+			{
+				UE_LOG(LogDTFluxAPI, Error, TEXT("Message %s is not a valid team-list object"), *MessageReceived)
+				return EDTFluxResponseType::UnknownResponse;
+			}
+			UE_LOG(LogDTFluxAPI, Log, TEXT("Received team-list data"));
+			ProcessTeamListResponse(TeamListResponse);
+			// TODO : check if object data are valid
+			return EDTFluxResponseType::TeamList;
+		}
+		if(Type.Contains("team-update"))
+		{
+			// TODO : check if object data are valid
+			return EDTFluxResponseType::TeamUpdate;
+		}
+		if(Type.Contains("split-sensor"))
+		{
+			// TODO : check if object data are valid
+			FDTFluxSplitSensorResponse SplitSensorResponse;
+			if( !FJsonObjectConverter::JsonObjectToUStruct
+				<FDTFluxSplitSensorResponse>(Json.ToSharedRef(), &SplitSensorResponse))
+			{
+				UE_LOG(LogDTFluxAPI, Error, TEXT("Message %s is not a valid split-sensor data"), *MessageReceived)
+				return EDTFluxResponseType::UnknownResponse;
+			}
+			UE_LOG(LogDTFluxAPI, Log, TEXT("Received split-sensor data"));
+			// send the array to DataStorage;
+			return EDTFluxResponseType::SplitSensor;
+		}
+		if(Type.Contains("status-update"))
+		{
+			// TODO : check if object data are valid
+			return EDTFluxResponseType::StatusUpdate;
+		}
 	}
-	else
+	
+	return ResponseType;
+}
+
+/***
+ * Timer handling
+ ***/
+void UDTFluxSubsystem::BroadcastTimerEvent()
+{
+	OnTimerTriggered.Broadcast();
+	UE_LOG(LogDTFluxAPI, Log, TEXT("TEST timer trigerred at : %s"), *FDateTime::Now().ToString());
+
+}
+
+
+void UDTFluxSubsystem::SetTimerEvent(const FDateTime& When)
+{
+	FTimespan TimeSpan = FDateTime::Now() - When;
+	UE_LOG(LogDTFluxAPI, Log, TEXT("TEST timer timeSpan Duration : %s"), *TimeSpan.GetDuration().ToString());
+}
+
+
+bool UDTFluxSubsystem::AddTimer(FDateTime Time, FOnTimer NewTimer)
+{
+	Timer.Add(Time, NewTimer);
+	return true;
+}
+
+
+/**
+ * END TIMER HANDLING
+ ***/
+
+void UDTFluxSubsystem::WsConnected()
+{
+	OnWsConnected.Broadcast();
+	UE_LOG(LogDTFluxAPI, Log, TEXT("Ws Connected"));
+}
+
+void UDTFluxSubsystem::WsReceivedMessage( const FString& MessageReceived)
+{
+	OnWsIncomingData.Broadcast(MessageReceived);
+	// UE_LOG(LogDTFluxAPI, Log, TEXT("Ws ReceivedMessage %s"), *MessageReceived);
+	// Find Data Object Type
+	EDTFluxResponseType Type = FindResponseType(MessageReceived);
+	switch(Type)
 	{
-		UE_LOG(LogDTFluxAPI, Error, TEXT("No Contest Yet !!!!"));
-		TArray<FDTFluxTeam> EmptyTeam;
-		return EmptyTeam;
+	case EDTFluxResponseType::TeamList:
+		break;
+	case EDTFluxResponseType::RaceData:
+		break;
+	case EDTFluxResponseType::ContestRanking:
+		break;
+	case EDTFluxResponseType::StageRanking:
+		break;
+	case EDTFluxResponseType::SplitRanking:
+		break;
+	case EDTFluxResponseType::TeamUpdate:
+		break;
+	default:
+		break;
 	}
+	// Let datastorage Know that we received something
+	// DataStorage->UpdateDataStorage(MessageReceived);
 }
 
-FString UDTFluxSubsystem::GetContestName(const int ContestId)
+void UDTFluxSubsystem::WsConnectionClosed(const FString& Reason)
 {
-	if(Contests.GetContestName(ContestId) != "")
+	OnWsClosed.Broadcast(Reason);
+	UE_LOG(LogDTFluxAPI, Log, TEXT("Ws ConnectionClosed with reason %s"), *Reason);
+}
+
+void UDTFluxSubsystem::WsConnectionError(const FString& Error)
+{
+	OnWsError.Broadcast(Error);
+	UE_LOG(LogDTFluxAPI, Log, TEXT("Ws Error %s"), *Error);
+}
+
+bool UDTFluxSubsystem::IsConnected() const
+{
+	return WsClient->IsConnected();
+}
+
+void UDTFluxSubsystem::ProcessTeamListResponse(const FDTFluxTeamListResponse& TeamListResponse)
+{
+	for( const auto& TeamListItemResponse : TeamListResponse.Datas)
 	{
-		return Contests.GetContestName(ContestId);
+		UE_LOG(LogDTFluxAPI, Log, TEXT("Sending Participant %s with Bib %d to DataStorage"), *TeamListItemResponse.LastName, TeamListItemResponse.Bib);
+
+		DataStorage->AddOrUpdateParticipant(TeamListItemResponse);
 	}
-	return TEXT("");
+	for(auto& Contest : DataStorage->Contests)
+	{
+		Contest.DumpParticipant();
+	}
+	// UE_LOG(LogDTFluxAPI, Log, TEXT("New Particpant list Size %d"), DataStorage->GetParticipants().Num())
+
+	
 }
 
-void UDTFluxSubsystem::UpdateStartList()
+void UDTFluxSubsystem::ProcessRaceDataResponse(const FDTFluxRaceDataResponse& DataResponse)
 {
-	const TSharedRef<IHttpRequest> Req = HttpRequest->CreateRequest();
-	Req->SetVerb("GET");
-	Req->SetURL(mSettings->GetAPIPath(EDTFluxAPIRoute::Starters));
-	Req->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
-	Req->OnProcessRequestComplete().BindUObject(this, &UDTFluxSubsystem::OnUpdateStartList);
+	for(const auto ContestResponse : DataResponse.Datas)
+	{
+		DataStorage->AddOrUpdateContest(ContestResponse);
+	}
 
-	Req->ProcessRequest();
+	UE_LOG(LogDTFluxAPI, Log, TEXT("New Contest Size %d"), DataStorage->Contests.Num())
+
 }
 
-void UDTFluxSubsystem::UpdateClassification(const int& ContestId, const int& StageId)
+
+void UDTFluxSubsystem::ProcessContestRankingResponse(const FDTFluxContestRankingResponse& ContestRankingResponse)
+{
+	TArray<FDTFluxContestRanking> NewRankings;
+	
+	for(const auto& TeamContestRankingResponse : ContestRankingResponse.Datas)
+	{
+		FDTFluxContestRanking NewRankingEl;
+		NewRankingEl.Participant = DataStorage->GetParticipant(ContestRankingResponse.ContestID, TeamContestRankingResponse.Bib);
+		NewRankingEl.Rank = TeamContestRankingResponse.Rank;
+		NewRankingEl.Gap = TeamContestRankingResponse.Gap;
+		NewRankingEl.Time = TeamContestRankingResponse.Time;
+		NewRankings.Add(NewRankingEl);
+	}
+}
+
+void UDTFluxSubsystem::ProcessStageRankingResponse(const FDTFluxStageRankingResponse& StageRankingResponse)
 {
 }
 
-TArray<FDTFluxParticipant> UDTFluxSubsystem::GetClassification(const int& ContestId, const int& StageId)
+void UDTFluxSubsystem::ProcessSplitRankingResponse(const FDTFluxStageRankingResponse& SplitRankingResponse)
 {
-	return TArray<FDTFluxParticipant>();
 }
 
-void UDTFluxSubsystem::StopServer()
+void UDTFluxSubsystem::ProcessTeamUpdateResponse(const FDTFluxTeamUpdateResponse& TeamUpdateResponse)
 {
-	FHttpServerModule::Get().StopAllListeners();
-	bIsListening = false;
-	OnServerStopped.Broadcast();
 }
+
+void UDTFluxSubsystem::ProcessStatusUpdateResponse(const FDTFluxTeamUpdateResponse& TeamUpdateResponse)
+{
+	
+}
+
+void UDTFluxSubsystem::ProcessSplitSensor(const FDTFluxSplitSensorResponse& SplitSensorResponse)
+{
+}
+
+TSharedPtr<FJsonObject> UDTFluxSubsystem::GetData(EDTFluxResponseType Type, const FString& Message)
+{
+	TSharedPtr<FJsonValue> JsonValue;
+	TSharedPtr<FJsonObject> Object;
+
+	// Create a reader pointer to read the json data
+	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Message);
+	if (FJsonSerializer::Deserialize(Reader, JsonValue))
+	{
+		
+	}
+	return Object;
+}
+
+

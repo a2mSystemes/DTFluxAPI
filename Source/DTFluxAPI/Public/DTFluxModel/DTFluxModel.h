@@ -3,421 +3,488 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DTFluxAPILog.h"
 #include "UObject/Object.h"
 #include "DTFluxModel.generated.h"
 
 
-// Forward declarations
-struct FDTFluxTeam;
-
 USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct DTFLUXAPI_API FDTFLuxStartStageData 
+struct DTFLUXAPI_API FDTFluxPerson
 {
 	GENERATED_BODY()
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Type;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Contest;
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Stage;
-
-	// Maybe this one can be made DATETIME
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString RealStartTime;
-};
-
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct DTFLUXAPI_API FDTFluxStartStagePayload
-{
-	GENERATED_BODY()
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Description;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Trigger;
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Type;
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	TArray<FDTFLuxStartStageData> Datas;
-};
-
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct DTFLUXAPI_API FDTFluxStartListItemPayload
-{
-	GENERATED_BODY()
-
-	// "Report": "Start List",
-	// "ContestID": 0,
-	// "ContestName": "",
-	// "Bib": 1039,
-	// "Firstname": "Mystère",
-	// "Lastname": "Mystère",
-	// "Gender": "",
-	// "Club": "",
-	// "Firstname2": "",
-	// "Lastname2": "",
-	// "Gender2": "",
-	// "Club2": "",
-	// "TeamName": "",
-	// "Category": "",
-	// "Elite": false
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	int ContestID;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString ContestName;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	int Bib;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
+public:
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
 	FString FirstName;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
 	FString LastName;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
 	FString Gender;
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Club;
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString FirstName2;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString LastName2;
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Gender2;
-		
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Club2;
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString TeamName;
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Category;
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	bool Elite;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	FString FunctionLine1 = TEXT("");
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	FString FunctionLine2 = TEXT("");
 };
 
-
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct DTFLUXAPI_API FDTFluxStartListPayload
-{
-	GENERATED_BODY()
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	TArray<FDTFluxStartListItemPayload> Participants;
-	
-};
 
 USTRUCT(BlueprintType, Category="DTFlux|Model")
 struct DTFLUXAPI_API FDTFluxParticipant
 {
 	GENERATED_BODY()
-
 public:
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString FirstName;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString LastName;
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Club;
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Gender;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	int Bib = -1;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	FDTFluxPerson Person1;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	FDTFluxPerson Person2;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
 	FString Category;
-};
-
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct DTFLUXAPI_API FDTFluxTeam
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	TArray<FDTFluxParticipant> Participants;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString TeamName;
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	int Bib;	
-};
-
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct FDTFluxContest
-{
-	GENERATED_BODY()
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	int ContestID;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString ContestName;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	TArray<FDTFluxTeam> TeamParticipants;
-
-	bool AddTeam(FDTFluxTeam Team)
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	FString Club;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	bool Elite;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	FString Status;
+	bool IsTeam()
 	{
-		TeamParticipants.Add(Team);
-		return true;
+		return (Person2.FirstName != "");
 	}
-	bool TeamAlreadyExist(FDTFluxTeam Team)
+};
+
+
+
+USTRUCT(BlueprintType, Category="DTFlux|Model")
+struct DTFLUXAPI_API FDTFluxContestRanking
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	FDTFluxParticipant Participant;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	int Rank;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	FString Gap;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	FString Time;
+};
+
+USTRUCT(BlueprintType, Category="DTFlux|Model")
+struct DTFLUXAPI_API FDTFluxStageRanking
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	FDTFluxParticipant Participant;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	int Rank;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	FString Gap;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	FString TimeSwim;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	FString TimeTransition;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	FString TimeRun;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	FString TimeStart;
+};
+
+USTRUCT(BlueprintType, Category="DTFlux|Model")
+struct DTFLUXAPI_API FDTFluxSplitGapItem
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	FDTFluxParticipant Participant;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	int Gap;
+};
+USTRUCT(BlueprintType, Category="DTFlux|Model")
+struct DTFLUXAPI_API FDTFluxSplitGap
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	TArray<FDTFluxSplitGapItem> SplitGapItems;
+};
+
+
+USTRUCT(BlueprintType, Category="DTFlux|Model")
+struct DTFLUXAPI_API FDTFluxSplit
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	int Id = -1;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	FString Name;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	TArray<FDTFluxSplitGap> SplitGaps;
+
+	void Dump() const;
+};
+
+USTRUCT(BlueprintType, Category="DTFlux|Model")
+struct DTFLUXAPI_API FDTFluxStage
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	int Id;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	FString Name;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	FDateTime StartTime;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	FDateTime EndTime;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	TArray<FDTFluxSplit> Splits;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	TArray<FDTFluxStageRanking> StageRanking;
+	bool SetStartTime(const FDateTime& ContestDate, const FString& TimeString);
+	bool SetEndTime(const FDateTime& ContestDate, const FString& TimeString);
+	bool UpdateStageRanking(TArray<TSharedPtr<FJsonValue>> StageRankingData);
+	bool AddSplit(TArray<TSharedPtr<FJsonValue>> SplitData);
+	void Dump() const;
+
+protected:
+};
+
+USTRUCT(BlueprintType, Category="DTFlux|Model")
+struct DTFLUXAPI_API FDTFluxContest
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	int Id = -1;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	FString Name;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	TArray<FDTFluxParticipant> Participants;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	TArray<FDTFluxStage> Stages;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	FDateTime Date;
+
+	bool AddStage( const TArray<TSharedPtr<FJsonValue>> StagesData, const TArray<FDTFluxSplit> Splits);
+	bool SetDate(const FString& StringDate);
+	void AddParticipant(const FDTFluxParticipant& Participant)
 	{
-		for(const auto& MyTeam : TeamParticipants)
+		if(Participants.IsEmpty())
 		{
-			// Compare Bib
-			if(MyTeam.Bib == Team.Bib )
+			Participants.Add(Participant);
+			return;
+		}
+		int Index = 0;
+		FDTFluxParticipant ToUpdate;
+		bool Update = false;
+		for(auto P : Participants)
+		{
+			if(P.Bib == Participant.Bib)
 			{
+				ToUpdate = P;
+				Update = true;
+				break;
+			}
+			else
+			{
+				Index++;
+			}
+		}
+		if(Update)
+		{
+			Participants.RemoveAt(Index);
+		}
+		Participants.Add(Participant);
+	};
+
+	bool GetParticipant(const int Bib, FDTFluxParticipant& OutParticipant)
+	{
+		for (auto& Participant : Participants)
+		{
+			if(Participant.Bib == Bib)
+			{
+				OutParticipant = Participant;
 				return true;
 			}
 		}
 		return false;
 	}
+	
+	void DumpParticipant()
+	{
+		int Num = 0;
+		for(const auto& Participant: Participants )
+		{
+			UE_LOG(LogDTFluxAPI, Log, TEXT("DUMP Participant : Name -> %s Bib %d"), *Participant.Person1.FirstName, Participant.Bib);
+			Num ++;
+		}
+		UE_LOG(LogDTFluxAPI, Log, TEXT("DUMP Participant : In Contest with ID %d there are %d Participant(s)"), Id, Num);
+
+	};
+};
+
+
+USTRUCT(BlueprintType, Category="DTFlux|Model")
+struct DTFLUXAPI_API FDTFluxSplitSensorItemResponse
+{
+	GENERATED_BODY()
+	UPROPERTY()
+	int Bib;
+	UPROPERTY()
+	FString Type = "split-sensor-item";
+	UPROPERTY()
+	int ContestID;
+	UPROPERTY()
+	int StageID;
+	UPROPERTY()
+	int SplitID;
+	UPROPERTY()
+	FString Time;
+};
+
+
+USTRUCT(BlueprintType, Category="DTFlux|Model")
+struct DTFLUXAPI_API FDTFluxSplitSensorResponse
+{
+	GENERATED_BODY()
+	UPROPERTY()
+	FString Type = "split-sensor";
+	UPROPERTY()
+	TArray<FDTFluxSplitSensorItemResponse> Datas;
+};
+
+
+USTRUCT(BlueprintType, Category="DTFlux|Model")
+struct DTFLUXAPI_API FDTFluxTeamListItemResponse
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY()
+	FString Type = "team-list-item";
+	UPROPERTY()
+	int ContestId;
+	UPROPERTY()
+	int Bib;
+	UPROPERTY()
+	FString FirstName;
+	UPROPERTY()
+	FString LastName;
+	UPROPERTY()
+	FString FirstName2 = "";
+	UPROPERTY()
+	FString LastName2 = "";
+	UPROPERTY()
+	FString Team = "";
+	UPROPERTY()
+	FString Gender;
+	UPROPERTY()
+	bool Elite;
+	UPROPERTY()
+	FString Category;
+	UPROPERTY()
+	FString Status;
+	UPROPERTY()
+	FString Club;
 };
 
 USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct DTFLUXAPI_API FDTFluxContestList
+struct DTFLUXAPI_API FDTFluxTeamListResponse
 {
 	GENERATED_BODY()
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	TMap<FString, FDTFluxContest>Contests;
-
-	int GetContestId(const FString& ContestName) const
-	{
-		const FDTFluxContest* Contest = Contests.Find(ContestName);
-		if(Contest)
-		{
-			return Contest->ContestID;
-		}
-		return -1;
-	}
-	FString GetContestName(const int& ContestId) const
-	{
-		for (const auto& Contest : Contests)
-		{
-			if (Contest.Value.ContestID == ContestId)
-			{
-				return Contest.Key;
-			}
-		}
-		return FString();
-	}
+public:
+	UPROPERTY()
+	FString Type = "team-list";
+	UPROPERTY()
+	TArray<FDTFluxTeamListItemResponse> Datas;
+	
 };
 
 
-UCLASS(Blueprintable, Category="DTFlux|Model")
-class DTFLUXAPI_API UDTFluxContestBPFn : public UBlueprintFunctionLibrary
+USTRUCT()
+struct DTFLUXAPI_API FDTFluxTeamUpdateResponse
+{
+	GENERATED_BODY()
+	UPROPERTY()
+	FString Type = "team-update";
+	UPROPERTY()
+	TArray<FDTFluxTeamListItemResponse> Datas;
+	
+};
+
+
+USTRUCT(BlueprintType, Category="DTFlux|Model")
+struct DTFLUXAPI_API FStageResponse
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY()
+	FString Type = "stage-response-data";
+	UPROPERTY()
+	int Id;
+	UPROPERTY()
+	FString Name;
+	UPROPERTY()
+	FString StartTime;
+	UPROPERTY()
+	FString EndTime;
+};
+
+
+USTRUCT(BlueprintType, Category="DTFlux|Model")
+struct DTFLUXAPI_API FSplitResponse
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY()
+	FString Type = "split-response-data";
+	UPROPERTY()
+	int Id;
+	UPROPERTY()
+	FString Name;
+};
+
+USTRUCT(BlueprintType, Category="DTFlux|Model")
+struct DTFLUXAPI_API FDTFluxContestResponse
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY()
+	FString Type = "contest";
+	UPROPERTY()
+	int Id;
+	UPROPERTY()
+	FString Name;
+	UPROPERTY()
+	FString Date;
+	UPROPERTY()
+	TArray<FStageResponse> Stages;
+	UPROPERTY()
+	TArray<FSplitResponse> Splits;
+};
+
+USTRUCT()
+struct DTFLUXAPI_API FDTFluxTeamContestRankingResponse
 {
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintPure, Category = "DT Http Server|Params")
-	static int GetContestId(const FDTFluxContestList& ContestList, const FString& ContestName)
-	{
-		return ContestList.GetContestId(ContestName);
-	}
-	UFUNCTION(BlueprintPure, Category = "DT Http Server|Params")
-	static FString GetContestName(const FDTFluxContestList& ContestList, const int& ContestId)
-	{
-		return ContestList.GetContestName(ContestId);
-	}
+	UPROPERTY()
+	FString Type = "team-contest-ranking";
+	UPROPERTY()
+	int Bib;
+	UPROPERTY()
+	int Rank;
+	UPROPERTY()
+	FString Time;
+	UPROPERTY();
+	FString Gap;
 };
 
-// TeamListItem Response from proxy Containing Team definition
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct FResponseTeamListItem
+USTRUCT()
+struct DTFLUXAPI_API FDTFluxContestRankingResponse
 {
 	GENERATED_BODY()
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Contest;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
+
+public:
+	UPROPERTY()
+	FString Type = "contest-ranking";
+	UPROPERTY()
+	int ContestID;
+	UPROPERTY()
+	TArray<FDTFluxTeamContestRankingResponse> Datas;
+};
+
+
+USTRUCT()
+struct DTFLUXAPI_API FDTFluxTeamStageRankingResponse
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY()
+	FString Type = "team-stage-ranking";
+	UPROPERTY()
 	int Bib;
+	UPROPERTY()
+	int Rank;
+	UPROPERTY()
+	FString Time;
+	UPROPERTY();
+	FString Gap;
+	UPROPERTY()
+	FString TimeSwim;
+	UPROPERTY();
+	FString TimeTransition;
+	UPROPERTY()
+	FString TimeRun;
+	UPROPERTY();
+	FString TimeStart;
+};
 
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString FirstName;
+USTRUCT()
+struct DTFLUXAPI_API FDTFluxStageRankingResponse
+{
+	GENERATED_BODY()
 
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString LastName;
+public:
+	UPROPERTY()
+	FString Type = "stage-ranking";
+	UPROPERTY()
+	int ContestID;
+	UPROPERTY()
+	int StageID;
+	UPROPERTY()
+	int SplitID;
+	UPROPERTY()
+	TArray<FDTFluxTeamStageRankingResponse> Datas;
+};
 
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Gender;
+USTRUCT(BlueprintType, Category="DTFlux|Model")
+struct DTFLUXAPI_API FDTFluxRaceDataResponse
+{
+	GENERATED_BODY()
+public:
 	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	bool Elite;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Club;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Team;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Category;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
+	UPROPERTY()
+	FString Type = "race-datas";
+	UPROPERTY()
+	TArray<FDTFluxContestResponse> Datas;
+};
+
+USTRUCT()
+struct DTFLUXAPI_API FDTFluxStatusTeamUpdateResponse
+{
+	GENERATED_BODY()
+	UPROPERTY()
+	FString Type = "status-team-update";
+	UPROPERTY()
+	int Bib;
+	UPROPERTY()
 	FString Status;
 };
-// TeamList Response from proxy Containing List of Team
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct FProxyResponseTeamList
+
+USTRUCT()
+struct DTFLUXAPI_API FDTFluxStatusUpdateResponse
 {
 	GENERATED_BODY()
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	TArray<FResponseTeamListItem> Datas;
-};
-
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct FProxyResponseStageListItem
-{
-	GENERATED_BODY()
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	int Id;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Name;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString StartTime;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString EndTime;
-};
-
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct FProxyResponseSplitsListItem
-{
-	GENERATED_BODY()
-
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	int Id;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Name;
+	UPROPERTY()
+	FString Type = "status-update";
+	TArray<FDTFluxStatusTeamUpdateResponse> Datas;
 	
 };
 
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct FProxyResponseRaceListItem
+UCLASS(BlueprintType, Category="DTFlux|Model|Helpers")
+class DTFLUXAPI_API UDTFluxModelHelper : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	int Id;
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Name;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Date;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	TArray<FProxyResponseStageListItem> Stages;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	TArray<FProxyResponseSplitsListItem> Splits;
-	
+public:
+	UFUNCTION(BlueprintCallable, Category="DTFlux|Model")
+	static bool IsParticipantATeam(const FDTFluxParticipant& Participant)
+	{
+		return Participant.Person2.FirstName != "";
+	}
 };
 
 
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct FProxyResponseContestRankingListItem
-{
-	GENERATED_BODY()
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	int Bib;
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	int Rank;
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Time;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Gap;
-	
-};
-
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct FProxyResponseContestRankingList
-{
-	GENERATED_BODY()
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	int ContestId;
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	TArray<FProxyResponseContestRankingListItem> Datas;
-};
-
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct FProxyResponseStageRankingListItem
-{
-	GENERATED_BODY()
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	int Bib;
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	int Rank;
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Time;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Gap;
-		
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString TimeSwim;
-			
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString TimeTransition;
-			
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString TimeRun;
-			
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString TimeStart;
-	
-};
-
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct FProxyResponseStageRankingList
-{
-	GENERATED_BODY()
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	int ContestId;
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	int StageId;
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	TArray<FProxyResponseStageRankingListItem> Datas;
-
-};

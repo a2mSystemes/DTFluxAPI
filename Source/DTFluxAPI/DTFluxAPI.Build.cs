@@ -11,7 +11,7 @@ public class DTFluxAPI : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core"
+				"Core", 
 			}
 			);
 			
@@ -24,6 +24,9 @@ public class DTFluxAPI : ModuleRules
 				"SlateCore",
 				"HTTPServer",
 				"HTTP",
+				"Networking",
+				"WebSockets",
+				"WebSocketNetworking",
 				"DeveloperToolSettings",
 				"DeveloperSettings",
 				"Json", 
