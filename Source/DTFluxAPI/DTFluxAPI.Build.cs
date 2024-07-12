@@ -11,7 +11,7 @@ public class DTFluxAPI : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core", 
+				"Core", "AvalancheText", 
 			}
 			);
 			
@@ -20,6 +20,8 @@ public class DTFluxAPI : ModuleRules
 			{
 				"CoreUObject",
 				"Engine",
+				"EditorSubsystem",
+				"EditorFramework",
 				"Slate",
 				"SlateCore",
 				"HTTPServer",
@@ -31,8 +33,11 @@ public class DTFluxAPI : ModuleRules
 				"DeveloperSettings",
 				"Json", 
 				"JsonUtilities",
+				"SlateCore",
+				"Text3D",
 				"AvalancheCore",
 				"AvalancheMedia",
+				"AvalancheText", 
 			}
 			);
 	}

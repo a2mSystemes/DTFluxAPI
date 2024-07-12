@@ -4,112 +4,35 @@
 
 #include "CoreMinimal.h"
 #include "Runtime/Engine/Public/Subsystems/EngineSubsystem.h"
-#include "DTFluxWebSocket/DTFluxWebsocketServer.h"
+// #include "DTFluxWebSocket/DTFluxWebsocketServer.h"
+//
+// #include "HttpServerRequest.h"
+// #include "HttpResultCallback.h"
+// #include "HttpRouteHandle.h"
+// #include <string>
 
-#include "HttpServerRequest.h"
-#include "HttpResultCallback.h"
-#include "HttpRouteHandle.h"
-#include <string>
-
-#include "DTFluxUtils/DTFluxHttpServerStruct.h"
 #include "DTFluxAPILog.h"
 #include "DTFluxDataStorage/DTFluxDataStorage.h"
 #include "DTFluxModel/DTFluxModel.h"
+#include "DTFluxSubsystemAPISettings/DTFluxSubsystemAPISettings.h"
 #include "DTFluxWebSocket/DTFluxWebsocketClient.h"
 #include "DTFluxSubsystem.generated.h"
 
-
 class UDTFluxDataStorage;
 class UDTFluxProjectSettings;
-class IHttpRouter;
-
-class IHttpRequest;
-class IHttpResponse;
-
-class FHttpModule;
-typedef TSharedPtr<IHttpRequest, ESPMode::ThreadSafe> FHttpRequestPtr;
-typedef TSharedPtr<IHttpResponse, ESPMode::ThreadSafe> FHttpResponsePtr;
-
-UENUM(BlueprintType, Category="DTFlux|Server")
-enum EDTFluxResponseErrorCode
-{
-	Unknown_Error UMETA(DisplayName="Unknown Error"),
-	InvalidBody_Error UMETA(DisplayName="Invalid Body"),
-	InvalidRequest_Error UMETA(DisplayName="Invalid Request"),
-	Internal_Error UMETA(DisplayName="Internal Server Error")
-};
-
-UENUM(BlueprintType, Category="DTFlux|Subsystem")
-enum EDTFluxResponseType: uint8
-{
-	UnknownResponse = 0 UMETA(DisplayName="UnknownResponse"),
-	RaceData = 1 UMETA(DisplayName="RaceData"),
-	ContestRanking = 2 UMETA(DisplayName="ContestRanking"),
-	StageRanking = 3 UMETA(DisplayName="StageRanking"),
-	SplitRanking = 4 UMETA(DisplayName="SplitRanking"),
-	TeamList = 5 UMETA(DisplayName="TeamList"),
-	TeamUpdate = 6 UMETA(DisplayName="TeamUpdate"),
-	SplitSensor = 7 UMETA(DisplayName="SplitSensor"),
-	StatusUpdate = 8 UMETA(DisplayName="StatusUpdate"),
-};
-
-USTRUCT(BlueprintType, Category="DTFlux|Server")
-struct FDTFluxResponseBody
-{
-	GENERATED_BODY()
-	
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Error;
-
-	UPROPERTY(Blueprintable, Category="DTFlux|Model", BlueprintReadOnly)
-	FString Success;
-
-FString Deserialize()
-	{
-		FString JSONObject;
-		JSONObject +=  TEXT("{");
-		JSONObject += TEXT("\"error\":\"");
-		JSONObject += Error.IsEmpty() ? TEXT("") : Error;
-		JSONObject += TEXT("\",\"success\":\"");
-		JSONObject += Success.IsEmpty() ? TEXT("") : Success;
-		JSONObject += TEXT("\"}");
-		UE_LOG(LogDTFluxAPI, Log, TEXT("JSONObject : %s"), *JSONObject);
-		return JSONObject;
-	}
-};
 
 
-USTRUCT()
-struct FDTFluxSubsystemAPISettings
-{
-	GENERATED_BODY()
-public:
-	FString WebsocketAddress = "ws://localhost";
-	int WebsocketPort = 3000;
-	FString ProxyAddress = "http://localhost";
-	int ProxyPort = 80;
-	//TODO : Maybe we must make a dedicated struct with enum to make endpoints more clean.
-	TMap<FString, FString> ProxyEndpoints;
 
-	static  FString GetRaceDataEndpoint(const FDTFluxSubsystemAPISettings* Settings);
-	static  FString GetContestRankingEndpoint(const FDTFluxSubsystemAPISettings* Settings, const int ContestId);
-	static  FString GetStageRankingEndpoint(const FDTFluxSubsystemAPISettings* Settings, const int ContestId, const int StageId);
-	static  FString GetStageRankingFilteredEndpoint(const FDTFluxSubsystemAPISettings* Settings, const int ContestId, const int StageId, const FString SplitName);
-	static  FString GetTeamsEndpoint(const FDTFluxSubsystemAPISettings* Settings);
 
-private:
-	FString GetProxyBaseEndpoint() const
-	{
-		return FString::Printf(TEXT("%s:%i"), *ProxyAddress, ProxyPort);
-	};
-};
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWsConnected);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWsIncomingData, FString, JsonData);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWsError, FString, Error);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWsClosed, FString, Reason);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTimerTriggered);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnTimer, FString, TimerName);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWsEvent, FDTFluxWsResponseEvent, WsResponseEvent);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFinisher, FDTFluxFinisher, Finisher);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnContestBegin, int, ContestId);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStageBegin, int, ContestId, int, StageId);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnTimesUp, int, ContestId, int, StageId);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnRestTimeBegin, int, ContestId, int, StageId);
 /**
  * DTFlux API Subsystem
  *
@@ -146,12 +69,6 @@ private:
 	
 protected:
 	UFUNCTION()
-	void WsSplitSensorReceivedInternal();
-	UFUNCTION()
-	void WsTeamUpdateReceivedInternal();
-	UFUNCTION()
-	void WsStatusUpdateReceivedInternal();
-	UFUNCTION()
 	void RequestRaceDatas();
 	UFUNCTION()
 	void RequestTeamList();
@@ -167,6 +84,8 @@ protected:
 	void BroadcastTimerEvent();
 	UPROPERTY()
 	TMap<FDateTime, FOnTimer> Timer;
+	bool DataStorageRaceDataInit = false;
+	bool DataStorageTeamListInit = false;
 
 public:
 	/** Implement this for initialization of instances of the system */
@@ -174,22 +93,29 @@ public:
 
 	/** Implement this for deinitialization of instances of the system */
 	virtual void Deinitialize() override;
-	
+	void InitDataStorage();
+	void LoadConfig(const UDTFluxProjectSettings* Settings);
+
 	UFUNCTION(BlueprintCallable, Category="DTFluxAPI | Subsytem")
 	bool ReloadSubsystem();
-
-	void LoadConfig(const UDTFluxProjectSettings* Settings);
 
 	UPROPERTY(BlueprintAssignable, Category="DTFlux|Events")
 	FOnTimerTriggered OnTimerTriggered;
 	UPROPERTY(BlueprintAssignable, Category="DTFlux|Events")
-	FOnWsIncomingData OnWsIncomingData;
+	FOnWsEvent OnWsEvent;
 	UPROPERTY(BlueprintAssignable, Category="DTFlux|Events")
-	FOnWsConnected OnWsConnected;
+	FOnFinisher OnFinisher;
 	UPROPERTY(BlueprintAssignable, Category="DTFlux|Events")
-	FOnWsError OnWsError;
+	FOnContestBegin OnContestBegin;
 	UPROPERTY(BlueprintAssignable, Category="DTFlux|Events")
-	FOnWsClosed OnWsClosed;
+	FOnStageBegin OnStageBegin;
+	UPROPERTY(BlueprintAssignable, Category="DTFlux|Events")
+	FOnTimesUp OnTimesUp;
+	UPROPERTY(BlueprintAssignable, Category="DTFlux|Events")
+	FOnRestTimeBegin FOnRestTimeBegin;
+
+	// UPROPERTY(BlueprintReadWrite, Category="DTFlux|Subsystem|Websocket")
+	// int ReconnectTimeout = 60; //seconds
 	UFUNCTION(BlueprintCallable, Category="DTFlux|Subsystem|WebSocket")
 	bool Reconnect();
 	
@@ -229,14 +155,10 @@ public:
 	UFUNCTION()
 	void ProcessTeamUpdateResponse(const FDTFluxTeamUpdateResponse& TeamUpdateResponse);
 	UFUNCTION()
-	void ProcessStatusUpdateResponse(const FDTFluxTeamUpdateResponse& TeamUpdateResponse);
+	void ProcessStatusUpdateResponse(const FDTFluxStatusUpdateResponse& StatusUpdateResponse);
 	UFUNCTION()
 	void ProcessSplitSensor(const FDTFluxSplitSensorResponse& SplitSensorResponse);
 
-	TSharedPtr<FJsonObject> GetData(EDTFluxResponseType Type, const FString& Message);
-
-	UFUNCTION()
-	EDTFluxResponseType FindResponseType(const FString& MessageReceived);
 	
 	UFUNCTION()
 	void WsConnected();
@@ -251,6 +173,13 @@ public:
 	bool IsConnected() const;
 
 
+
+	FTimerHandle TestTimerHandle;
+
 	
+	void TestTimers()
+	{
+		UE_LOG(LogDTFluxAPI, Log, TEXT("IT WORKS !!!!"));
+	}
 };
 

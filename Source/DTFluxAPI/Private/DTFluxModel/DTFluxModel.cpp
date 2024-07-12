@@ -3,9 +3,26 @@
 
 #include "DTFluxModel/DTFluxModel.h"
 
-void FDTFluxSplit::Dump() const
+bool FDTFluxParticipant::IsTeam() const
 {
-	UE_LOG(LogDTFluxAPI, Log, TEXT("[DTFluxStage DUMP] Split ID : %i, Name:%s"), Id, *Name);
+	return (Person2.FirstName != "");
+}
+
+void FDTFluxParticipant::Dump() const{
+	FString EliteStr = "NO";
+	if(Elite)
+	{
+		EliteStr = "YES";
+	}
+	UE_LOG(LogDTFluxAPI, Log, TEXT("PARTICIPANT with bib: %03d"), Bib);
+	UE_LOG(LogDTFluxAPI, Log, TEXT("Fullname : %s %s"), *Person1.FirstName, *Person1.LastName);
+	if(IsTeam())
+	{
+		UE_LOG(LogDTFluxAPI, Log, TEXT("Teamate : %s %s"), *Person2.FirstName, *Person2.LastName);
+		UE_LOG(LogDTFluxAPI, Log, TEXT("Team name : %s"), *Team);
+	}
+	UE_LOG(LogDTFluxAPI, Log, TEXT("Club : %s, Category : %s, IsElite : %s, Status : %s"),
+		*Club, *Category, *EliteStr, *UEnum::GetValueAsString(Status));
 
 }
 
@@ -35,51 +52,8 @@ bool FDTFluxStage::SetEndTime(const FDateTime& ContestDate, const FString& TimeS
 	return true;
 }
 
-bool FDTFluxStage::UpdateStageRanking(TArray<TSharedPtr<FJsonValue>> Data)
-{
-	return true;
-}
-
-bool FDTFluxStage::AddSplit(TArray<TSharedPtr<FJsonValue>> SplitData)
-{
-	return true;
-}
-
-void FDTFluxStage::Dump() const
-{
-	UE_LOG(LogDTFluxAPI, Log, TEXT("[DTFluxStage DUMP] Id : %i, Name : %s"), Id, *Name);
-	UE_LOG(LogDTFluxAPI, Log, TEXT("[DTFluxStage DUMP] StartTime : %s, EndTime : %s"), *StartTime.ToString(), *EndTime.ToString());
-	UE_LOG(LogDTFluxAPI, Log, TEXT("[DTFluxStage DUMP] Splits ["));
-	for(const auto& Split : Splits)
-	{
-		Split.Dump();
-	}
-	UE_LOG(LogDTFluxAPI, Log, TEXT("[DTFluxStage DUMP] ]"));
-
-		
-}
-
-bool FDTFluxContest::AddStage( const TArray<TSharedPtr<FJsonValue>> StagesData, TArray<FDTFluxSplit> Splits)
-{
-	for (const auto& StageData : StagesData)
-	{
-		FDTFluxStage Stage;
-		Stage.Id = StageData->AsObject()->GetIntegerField(TEXT("id"));
-		Stage.Name = StageData->AsObject()->GetStringField(TEXT("name"));
-		FString StartTime = StageData->AsObject()->GetStringField(TEXT("startTime"));
-		FString EndTime = StageData->AsObject()->GetStringField(TEXT("endTime"));
-		Stage.SetStartTime(Date, StartTime);
-		Stage.SetEndTime(Date, EndTime);
-		Stage.Splits = Splits;
-		Stages.Add(Stage);
-		Stage.Dump();
-	}
-	return true;
-}
-
 bool FDTFluxContest::SetDate(const FString& StringDate)
 {
-
 	TArray<FString> Tokens;
 	StringDate.ParseIntoArray(Tokens, TEXT("-"));
 	if(Tokens.Num() != 3)

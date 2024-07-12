@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "DTFluxAPILog.h"
+#include "DTFluxModelResponse.h"
+#include "DTFluxUtils/DTFluxEnums.h"
 #include "UObject/Object.h"
 #include "DTFluxModel.generated.h"
 
@@ -25,7 +27,6 @@ public:
 	FString FunctionLine2 = TEXT("");
 };
 
-
 USTRUCT(BlueprintType, Category="DTFlux|Model")
 struct DTFLUXAPI_API FDTFluxParticipant
 {
@@ -44,14 +45,91 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
 	bool Elite;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
-	FString Status;
-	bool IsTeam()
+	TEnumAsByte<EDTFluxParticipantStatusType> Status;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	FString Team;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	int LastSplitId = 0;
+	bool IsTeam() const;
+	void Dump() const;
+	FString GetParticipantFormatedName(bool Truncate = false, int MaxSize = 20) const
 	{
-		return (Person2.FirstName != "");
+		FString ParticipantName;
+		if(Truncate)
+		{
+			if(IsTeam())
+			{
+				//Concatenate the team name;
+				if(Team.Len() > MaxSize - 3)
+				{
+					return Team.Left(MaxSize - 3).Append(TEXT("..."));
+				}
+				return Team;
+			}
+			if(Person1.FirstName.Contains("-") )
+			{
+				FString Formated = "";
+				//Compound Firstname
+				TArray<FString> Out;
+				Person1.FirstName.ParseIntoArray(Out,TEXT("-"),true);
+				for(const auto& Str : Out)
+				{
+					Formated.Append(Str.Left(1).ToUpper()).Append(".");
+				}
+				// TODO : Camel Case handling for LastName
+				Formated.Append(" ").Append(*Person1.LastName);
+				UE_LOG(LogDTFluxAPI, Log, TEXT("Firstname is with space compound. Formated Name %s length %02d MAX Size : %02d"),
+					*Formated, Formated.Len(), MaxSize);
+				if(Formated.Len() >= MaxSize)
+				{
+					UE_LOG(LogDTFluxAPI, Log, TEXT("Reducing %s Formated"), *Formated);
+
+					return Formated.Left(MaxSize - 3).Append("...");
+				}
+				return Formated;
+			}
+			if(Person1.FirstName.Contains(" "))
+			{
+				FString Formated = "";
+				//Compound Firstname
+				TArray<FString> Out;
+				Person1.FirstName.ParseIntoArray(Out,TEXT(" "),true);
+				for(const auto& Str : Out)
+				{
+					Formated.Append(Str.Left(1).ToUpper()).Append(".");
+				}
+				// TODO : Camel Case handling for LastName
+				Formated.Append(" ").Append(*Person1.LastName);
+				UE_LOG(LogDTFluxAPI, Log, TEXT("Firstname is with space compound. Formated Name %s length %02d MAX Size : %02d"),
+					*Formated, Formated.Len(), MaxSize);
+				if(Formated.Len() >= MaxSize)
+				{
+					UE_LOG(LogDTFluxAPI, Log, TEXT("Reducing %s Formated"), *Formated);
+					return Formated.Left(MaxSize - 3).Append("...");
+				}
+				return Formated;
+			}
+			FString Formated = Person1.FirstName.Left(1).Append(". ");
+			Formated.Append(Person1.LastName);
+			UE_LOG(LogDTFluxAPI, Log, TEXT("Firstname is not compound. Formated Name %s length %02d MAX Size : %02d"),
+				*Formated, Formated.Len(), MaxSize);
+			if(Formated.Len() >= MaxSize)
+			{
+				UE_LOG(LogDTFluxAPI, Log, TEXT("Reducing %s Formated"), *Formated);
+				return Formated.Left(MaxSize - 3).Append("...");
+			}
+			return Formated;
+		}
+		else
+		{
+			if(!IsTeam())
+			{
+				return FString::Printf(TEXT("%s %s"), *Person1.FirstName, *Person2.LastName);
+			}
+			return Team;
+		}
 	}
 };
-
-
 
 USTRUCT(BlueprintType, Category="DTFlux|Model")
 struct DTFLUXAPI_API FDTFluxContestRanking
@@ -59,13 +137,19 @@ struct DTFLUXAPI_API FDTFluxContestRanking
 	GENERATED_BODY()
 public:
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
-	FDTFluxParticipant Participant;
+	int Bib;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
 	int Rank;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
 	FString Gap;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
 	FString Time;
+	void Dump()
+	{
+		UE_LOG(LogDTFluxAPI, Log,
+			TEXT("FDTFluxContestRanking ->> \n \"rank\" : %d, Participant with Bib %d \"Gap\" : %s, \"Time\" : %s "),
+			Rank, Bib, *Gap, *Time );
+	};
 };
 
 USTRUCT(BlueprintType, Category="DTFlux|Model")
@@ -74,7 +158,7 @@ struct DTFLUXAPI_API FDTFluxStageRanking
 	GENERATED_BODY()
 public:
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
-	FDTFluxParticipant Participant;
+	int Bib;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
 	int Rank;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
@@ -87,27 +171,35 @@ public:
 	FString TimeRun;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
 	FString TimeStart;
+
+	void Dump() const
+	{	
+		UE_LOG(LogDTFluxAPI, Log, TEXT("RANKING : %02d. Participant bib %d %s %s %s %s %s"),
+			Rank, Bib, *Gap, *TimeSwim,
+			*TimeTransition, *TimeRun, *TimeStart);
+	}
 };
 
 USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct DTFLUXAPI_API FDTFluxSplitGapItem
+struct DTFLUXAPI_API FDTFluxSplitRanking
 {
 	GENERATED_BODY()
 public:
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
-	FDTFluxParticipant Participant;
+	int Bib;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
-	int Gap;
-};
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct DTFLUXAPI_API FDTFluxSplitGap
-{
-	GENERATED_BODY()
-public:
+	FString Gap;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
-	TArray<FDTFluxSplitGapItem> SplitGapItems;
+	FString Time;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	int Rank;
+	void Dump() const
+	{
+		UE_LOG(LogDTFluxAPI, Log, TEXT("SplitGapItem"))
+		// Participant.Dump();
+		UE_LOG(LogDTFluxAPI, Log, TEXT("Bib %02d Gap %s"), Bib, *Gap);
+	}
 };
-
 
 USTRUCT(BlueprintType, Category="DTFlux|Model")
 struct DTFLUXAPI_API FDTFluxSplit
@@ -119,9 +211,46 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
 	FString Name;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
-	TArray<FDTFluxSplitGap> SplitGaps;
+	TArray<FDTFluxSplitRanking> SplitGaps;
 
-	void Dump() const;
+	void Dump() const
+	{
+		UE_LOG(LogDTFluxAPI, Log, TEXT("Split %02d::%s *****\n"), Id, *Name);
+		for(const auto& SplitGapItem : SplitGaps)
+		{
+			SplitGapItem.Dump();
+		}
+	}
+
+	void InsertOrReplace(const FDTFluxStageRankingResponseItem& SplitRankingItemResp)
+	{
+		FDTFluxSplitRanking NewSplitGapItem;
+		NewSplitGapItem.Bib = SplitRankingItemResp.Bib;
+		NewSplitGapItem.Gap = SplitRankingItemResp.Gap;
+		if(SplitGaps.IsEmpty())
+		{
+			SplitGaps.Add(NewSplitGapItem);
+			return;
+		}
+		bool Update = true;
+		int Idx = 0;
+		for(auto& SplitGapItem : SplitGaps)
+		{
+			if(SplitGapItem.Bib == SplitRankingItemResp.Bib)
+			{
+				Update = false;
+			}
+			Idx++;
+		}
+		if(Update)
+		{
+			if(SplitGaps.IsValidIndex(Idx))
+			{
+				SplitGaps.RemoveAt(Idx);
+			}
+		}
+		SplitGaps.Add(NewSplitGapItem);
+	};
 };
 
 USTRUCT(BlueprintType, Category="DTFlux|Model")
@@ -143,10 +272,32 @@ public:
 	TArray<FDTFluxStageRanking> StageRanking;
 	bool SetStartTime(const FDateTime& ContestDate, const FString& TimeString);
 	bool SetEndTime(const FDateTime& ContestDate, const FString& TimeString);
-	bool UpdateStageRanking(TArray<TSharedPtr<FJsonValue>> StageRankingData);
-	bool AddSplit(TArray<TSharedPtr<FJsonValue>> SplitData);
-	void Dump() const;
+	void Dump() const
+	{
+		UE_LOG(LogDTFluxAPI, Log, TEXT("Stage %02d::%s"), Id, *Name);
+		UE_LOG(LogDTFluxAPI, Log, TEXT("Starts at %s and is supposed to finnish at %s"),
+			*StartTime.ToString(), *EndTime.ToString());
+		UE_LOG(LogDTFluxAPI, Log, TEXT("Splits : \n"));
+		for(const auto& StageRankingEl : StageRanking)
+		{
+			StageRankingEl.Dump();
+		}
+		UE_LOG(LogDTFluxAPI, Log, TEXT("Splits : \n"));
+		for(const auto& Split : Splits)
+		{
+			Split.Dump();
+		}
 
+	};
+	void SortStageRanking()
+	{
+		StageRanking.Sort([](const FDTFluxStageRanking& A, const FDTFluxStageRanking& B)
+		{
+			if(A.Rank == 0 || B.Rank == 0)
+				return true;
+			return A.Rank > B.Rank;
+		});
+	};
 protected:
 };
 
@@ -165,8 +316,9 @@ public:
 	TArray<FDTFluxStage> Stages;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
 	FDateTime Date;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	TArray<FDTFluxContestRanking> ContestRanking;
 
-	bool AddStage( const TArray<TSharedPtr<FJsonValue>> StagesData, const TArray<FDTFluxSplit> Splits);
 	bool SetDate(const FString& StringDate);
 	void AddParticipant(const FDTFluxParticipant& Participant)
 	{
@@ -182,6 +334,9 @@ public:
 		{
 			if(P.Bib == Participant.Bib)
 			{
+				UE_LOG(LogDTFluxAPI, Log, TEXT("Idx %d, OLD : %s %s new %s %s in Contest%02d"),
+						Index, *P.Person1.FirstName, *P.Person1.LastName,
+						*Participant.Person1.FirstName, *Participant.Person1.LastName, Id);
 				ToUpdate = P;
 				Update = true;
 				break;
@@ -193,11 +348,17 @@ public:
 		}
 		if(Update)
 		{
-			Participants.RemoveAt(Index);
+			if(Participants.IsValidIndex(Index))
+			{
+				UE_LOG(LogDTFluxAPI, Log, TEXT("Idx %d, REMOVED : %s %s in Contest%02d"),
+		Index, 
+		*Participants[Index].Person1.FirstName, *Participants[Index].Person1.LastName, Id);
+				Participants.RemoveAt(Index);	
+			}
+
 		}
 		Participants.Add(Participant);
 	};
-
 	bool GetParticipant(const int Bib, FDTFluxParticipant& OutParticipant)
 	{
 		for (auto& Participant : Participants)
@@ -210,7 +371,6 @@ public:
 		}
 		return false;
 	}
-	
 	void DumpParticipant()
 	{
 		int Num = 0;
@@ -222,269 +382,89 @@ public:
 		UE_LOG(LogDTFluxAPI, Log, TEXT("DUMP Participant : In Contest with ID %d there are %d Participant(s)"), Id, Num);
 
 	};
-};
-
-
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct DTFLUXAPI_API FDTFluxSplitSensorItemResponse
-{
-	GENERATED_BODY()
-	UPROPERTY()
-	int Bib;
-	UPROPERTY()
-	FString Type = "split-sensor-item";
-	UPROPERTY()
-	int ContestID;
-	UPROPERTY()
-	int StageID;
-	UPROPERTY()
-	int SplitID;
-	UPROPERTY()
-	FString Time;
-};
-
-
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct DTFLUXAPI_API FDTFluxSplitSensorResponse
-{
-	GENERATED_BODY()
-	UPROPERTY()
-	FString Type = "split-sensor";
-	UPROPERTY()
-	TArray<FDTFluxSplitSensorItemResponse> Datas;
-};
-
-
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct DTFLUXAPI_API FDTFluxTeamListItemResponse
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY()
-	FString Type = "team-list-item";
-	UPROPERTY()
-	int ContestId;
-	UPROPERTY()
-	int Bib;
-	UPROPERTY()
-	FString FirstName;
-	UPROPERTY()
-	FString LastName;
-	UPROPERTY()
-	FString FirstName2 = "";
-	UPROPERTY()
-	FString LastName2 = "";
-	UPROPERTY()
-	FString Team = "";
-	UPROPERTY()
-	FString Gender;
-	UPROPERTY()
-	bool Elite;
-	UPROPERTY()
-	FString Category;
-	UPROPERTY()
-	FString Status;
-	UPROPERTY()
-	FString Club;
-};
-
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct DTFLUXAPI_API FDTFluxTeamListResponse
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY()
-	FString Type = "team-list";
-	UPROPERTY()
-	TArray<FDTFluxTeamListItemResponse> Datas;
-	
-};
-
-
-USTRUCT()
-struct DTFLUXAPI_API FDTFluxTeamUpdateResponse
-{
-	GENERATED_BODY()
-	UPROPERTY()
-	FString Type = "team-update";
-	UPROPERTY()
-	TArray<FDTFluxTeamListItemResponse> Datas;
-	
-};
-
-
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct DTFLUXAPI_API FStageResponse
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY()
-	FString Type = "stage-response-data";
-	UPROPERTY()
-	int Id;
-	UPROPERTY()
-	FString Name;
-	UPROPERTY()
-	FString StartTime;
-	UPROPERTY()
-	FString EndTime;
-};
-
-
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct DTFLUXAPI_API FSplitResponse
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY()
-	FString Type = "split-response-data";
-	UPROPERTY()
-	int Id;
-	UPROPERTY()
-	FString Name;
-};
-
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct DTFLUXAPI_API FDTFluxContestResponse
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY()
-	FString Type = "contest";
-	UPROPERTY()
-	int Id;
-	UPROPERTY()
-	FString Name;
-	UPROPERTY()
-	FString Date;
-	UPROPERTY()
-	TArray<FStageResponse> Stages;
-	UPROPERTY()
-	TArray<FSplitResponse> Splits;
-};
-
-USTRUCT()
-struct DTFLUXAPI_API FDTFluxTeamContestRankingResponse
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY()
-	FString Type = "team-contest-ranking";
-	UPROPERTY()
-	int Bib;
-	UPROPERTY()
-	int Rank;
-	UPROPERTY()
-	FString Time;
-	UPROPERTY();
-	FString Gap;
-};
-
-USTRUCT()
-struct DTFLUXAPI_API FDTFluxContestRankingResponse
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY()
-	FString Type = "contest-ranking";
-	UPROPERTY()
-	int ContestID;
-	UPROPERTY()
-	TArray<FDTFluxTeamContestRankingResponse> Datas;
-};
-
-
-USTRUCT()
-struct DTFLUXAPI_API FDTFluxTeamStageRankingResponse
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY()
-	FString Type = "team-stage-ranking";
-	UPROPERTY()
-	int Bib;
-	UPROPERTY()
-	int Rank;
-	UPROPERTY()
-	FString Time;
-	UPROPERTY();
-	FString Gap;
-	UPROPERTY()
-	FString TimeSwim;
-	UPROPERTY();
-	FString TimeTransition;
-	UPROPERTY()
-	FString TimeRun;
-	UPROPERTY();
-	FString TimeStart;
-};
-
-USTRUCT()
-struct DTFLUXAPI_API FDTFluxStageRankingResponse
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY()
-	FString Type = "stage-ranking";
-	UPROPERTY()
-	int ContestID;
-	UPROPERTY()
-	int StageID;
-	UPROPERTY()
-	int SplitID;
-	UPROPERTY()
-	TArray<FDTFluxTeamStageRankingResponse> Datas;
-};
-
-USTRUCT(BlueprintType, Category="DTFlux|Model")
-struct DTFLUXAPI_API FDTFluxRaceDataResponse
-{
-	GENERATED_BODY()
-public:
-	
-	UPROPERTY()
-	FString Type = "race-datas";
-	UPROPERTY()
-	TArray<FDTFluxContestResponse> Datas;
-};
-
-USTRUCT()
-struct DTFLUXAPI_API FDTFluxStatusTeamUpdateResponse
-{
-	GENERATED_BODY()
-	UPROPERTY()
-	FString Type = "status-team-update";
-	UPROPERTY()
-	int Bib;
-	UPROPERTY()
-	FString Status;
-};
-
-USTRUCT()
-struct DTFLUXAPI_API FDTFluxStatusUpdateResponse
-{
-	GENERATED_BODY()
-	UPROPERTY()
-	FString Type = "status-update";
-	TArray<FDTFluxStatusTeamUpdateResponse> Datas;
-	
-};
-
-UCLASS(BlueprintType, Category="DTFlux|Model|Helpers")
-class DTFLUXAPI_API UDTFluxModelHelper : public UBlueprintFunctionLibrary
-{
-	GENERATED_BODY()
-
-public:
-	UFUNCTION(BlueprintCallable, Category="DTFlux|Model")
-	static bool IsParticipantATeam(const FDTFluxParticipant& Participant)
+	bool AddContestRanking(const FDTFluxContestRanking& NewRanking)
 	{
-		return Participant.Person2.FirstName != "";
+		bool Update = false;
+		if(ContestRanking.IsEmpty())
+		{
+			ContestRanking.Add(NewRanking);
+			return true;
+		}
+		int Idx = 0;
+		for( auto& Ranking : ContestRanking)
+		{
+			if(NewRanking.Bib == Ranking.Bib)
+			{
+				// we need to update a ranking
+				Update = true;
+				break;
+			}
+			Idx++;
+		}
+		if(Update)
+		{
+			ContestRanking.RemoveAt(Idx);
+			ContestRanking.Insert(NewRanking, Idx);
+			UE_LOG(LogDTFluxAPI, Log,
+				TEXT("Inserting %d with rank %d in Contest with ID %d"),
+				NewRanking.Bib, NewRanking.Rank, Id );
+			return true;
+		}
+		else
+		{
+			ContestRanking.Add(NewRanking);
+			return true;
+		}
+		return false;
 	}
+	void Dump()
+	{
+		UE_LOG(LogDTFluxAPI, Log, TEXT("CONTEST DUMP BEGIN *****%s::%02d *****\n"), *Name, Id);
+		UE_LOG(LogDTFluxAPI, Log, TEXT("Date : %s"), *Date.ToString());
+		UE_LOG(LogDTFluxAPI, Log, TEXT("PARTICIPANTS : \n"));
+		DumpParticipant();
+		for(auto& Stage: Stages)
+		{
+			Stage.Dump();
+		}
+		for(auto& ContestRankingEl: ContestRanking)
+		{
+			ContestRankingEl.Dump();
+		}
+		UE_LOG(LogDTFluxAPI, Log, TEXT("CONTEST DUMP END *****%s::%02d *****\n"), *Name, Id);
+	}
+	void SortContestRanking()
+	{
+		ContestRanking.Sort([](const FDTFluxContestRanking& A, const FDTFluxContestRanking& B)
+		{
+			if(A.Rank == 0 || B.Rank == 0)
+				return true;
+			return A.Rank > B.Rank;
+		});
+	};
+};
+
+USTRUCT(BlueprintType, Category="FDTFlux|Model")
+struct FDTFluxFinisher
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category="FDTFlux|Model")
+	TEnumAsByte<EDTFluxFinisherType> Type;
+	UPROPERTY(BlueprintReadOnly, Category="FDTFlux|Model")
+	FDTFluxParticipant Participant;
+	UPROPERTY(BlueprintReadOnly, Category="FDTFlux|Model")
+	FDTFluxStageRanking CurrentRanking;
 };
 
 
+USTRUCT(BlueprintType, Category="DTFlux|Subsystem|Events")
+struct FDTFluxWsResponseEvent
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category="DTFlux|Subsystem|Events")
+	TEnumAsByte<EDTFluxResponseType> WsResponseType;
+	UPROPERTY(BlueprintReadOnly, Category="DTFlux|Subsystem|Events")
+	FString RawData;
+};

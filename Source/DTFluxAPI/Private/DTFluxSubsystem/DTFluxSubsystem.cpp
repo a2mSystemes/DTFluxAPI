@@ -2,87 +2,16 @@
 
 #include "DTFluxSubsystem/DTFluxSubsystem.h"
 #include "DTFluxProjectSettings/DTFluxProjectSettings.h"
-#include "DTFluxWebSocket/DTFluxWebsocketServer.h"
-
 #include "DTFluxModel/DTFluxModel.h"
-#include "HttpServerModule.h"
-#include "HttpRouteHandle.h"
 #include "DTFluxAPILog.h"
 #include "DTFluxDataStorage/DTFluxDataStorage.h"
-#include "IHttpRouter.h"
-#include "HttpModule.h"
 #include "JsonObjectConverter.h"
-#include "Interfaces/IHttpResponse.h"
-// DEPRECATED : Now in WS
-FString FDTFluxSubsystemAPISettings::GetRaceDataEndpoint(const FDTFluxSubsystemAPISettings* Settings)
-{
-	if(Settings)
-	{
-		FString RaceDataEndpoint = 
-			FString::Printf(TEXT("%s/%p"), *Settings->GetProxyBaseEndpoint(), Settings->ProxyEndpoints.FindKey("race-datas"));
-		UE_LOG(LogDTFluxAPI, Log, TEXT("Proxy Race Data -> %s"), *RaceDataEndpoint);
-		return RaceDataEndpoint;
-	}
-	return FString("");
-}
-// DEPRECATED : Now in WS
-FString FDTFluxSubsystemAPISettings::GetContestRankingEndpoint(const FDTFluxSubsystemAPISettings* Settings, const int ContestId)
-{
-	if(Settings)
-	{
-		FString Ranking = *Settings->ProxyEndpoints.FindKey("ranking");
-		const TCHAR* ContestIDTmpl = *FString("{:ContestID}");
-		const TCHAR* ContestIDValue = *FString(TEXT("%i"),ContestId);
-		FString ContestRanking = Ranking.Replace(ContestIDTmpl, ContestIDValue );
-		FString ContestRankingEndpoint = Settings->GetProxyBaseEndpoint() + ContestRanking;
-		UE_LOG(LogDTFluxAPI, Log, TEXT("Proxy Contest Ranking -> %s"), *ContestRankingEndpoint);
-		return ContestRankingEndpoint;
-	}
-	return FString("");
-}
-// DEPRECATED : Now in WS
-FString FDTFluxSubsystemAPISettings::GetStageRankingEndpoint(const FDTFluxSubsystemAPISettings* Settings, const int ContestId,
-	const int StageId)
-{
-	if(Settings)
-	{
-		FString StageRanking = GetContestRankingEndpoint(Settings, ContestId);
-		StageRanking = FString::Printf(TEXT("%s/stage/%i/"), *StageRanking, StageId);
-		UE_LOG(LogDTFluxAPI, Log, TEXT("Proxy Stage Ranking -> %s"), *StageRanking);
-		return StageRanking;
-	}
-	return FString("");
-}
-// DEPRECATED : Now in WS
-FString FDTFluxSubsystemAPISettings::GetStageRankingFilteredEndpoint(const FDTFluxSubsystemAPISettings* Settings,
-	const int ContestId, const int StageId, const FString SplitName)
-{
-	if (Settings){
-		FString StageRanking = GetStageRankingEndpoint(Settings, ContestId, StageId);
-		StageRanking = FString::Printf(TEXT("%s?splitname=%s"), *StageRanking, *SplitName);
-		UE_LOG(LogDTFluxAPI, Log, TEXT("Proxy Stage Ranking with Splitname -> %s"), *StageRanking);
-		return StageRanking;
-	}
-	return FString("");
-}
+#include "DTFluxSubsystemAPISettings/DTFluxSubsystemAPISettings.h"
 
-// DEPRECATED : Now in WS
-FString FDTFluxSubsystemAPISettings::GetTeamsEndpoint(const FDTFluxSubsystemAPISettings* Settings)
-{
-	if(Settings)
-	{
-		FString TeamsEndpoint = 
-			FString::Printf(TEXT("%s/%p"), *Settings->GetProxyBaseEndpoint(), Settings->ProxyEndpoints.FindKey("teams"));
-		UE_LOG(LogDTFluxAPI, Log, TEXT("Proxy Teams -> %s"), *TeamsEndpoint );
-		return TeamsEndpoint;
-	}
-	return FString("");
-}
 
 /****
  * DTFlux subsystem 
  ****/
-
 
 void UDTFluxSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -98,12 +27,69 @@ void UDTFluxSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	WsClient->Connect(SubSettings.WebsocketAddress, SubSettings.WebsocketPort);
 
 	DataStorage = NewObject<UDTFluxDataStorage>();
+	// DataStorage->InitDatastorage();
+
+	
+	
 	FDateTime Now = FDateTime::Now();
 	FDateTime Send1Min = Now + FTimespan::FromMinutes(1);
 	UE_LOG(LogDTFluxAPI, Log, TEXT("TEST timer timeSpan Duration : %s"), *Send1Min.ToString());
-
 	// SetTimerEvent( Send1Min );
-	
+	// UWorld* World = nullptr;
+	// TIndirectArray<FWorldContext> WorldCtx = GEngine->GetWorldContexts();
+	// for(const auto& Ctx : WorldCtx)
+	// {
+	// 	EWorldType::Type Type = Ctx.WorldType.GetValue();
+	// 	switch(Type)
+	// 	{
+	// 	case EWorldType::None:
+	// 		UE_LOG(LogDTFluxAPI, Log, TEXT("Ctx world is None "));
+	// 		break;
+	//
+	// 	case EWorldType::Editor:
+	// 		UE_LOG(LogDTFluxAPI, Log, TEXT("Ctx world is EDITOR "));
+	// 		break;
+	//
+	// 	case EWorldType::Game:
+	// 		UE_LOG(LogDTFluxAPI, Log, TEXT("Ctx world is GAME "));
+	// 		break;
+	//
+	// 	case EWorldType::GamePreview :
+	// 		UE_LOG(LogDTFluxAPI, Log, TEXT("Ctx world is GamePreview "));
+	// 		break;
+	//
+	// 	case EWorldType::EditorPreview:
+	// 		UE_LOG(LogDTFluxAPI, Log, TEXT("Ctx world is EditorPreview "));
+	// 		break;
+	//
+	// 	case EWorldType::Inactive:
+	// 		UE_LOG(LogDTFluxAPI, Log, TEXT("Ctx world is Inactive "));
+	// 		break;
+	// 		
+	// 	case EWorldType::PIE:
+	// 		UE_LOG(LogDTFluxAPI, Log, TEXT("Ctx world is PIE "));
+	// 		break;
+	//
+	// 	case EWorldType::GameRPC:
+	// 		UE_LOG(LogDTFluxAPI, Log, TEXT("Ctx world is GameRPC "));
+	// 		break;
+	//
+	// 	default:
+	// 		break;
+	// 	}
+	// }
+	// if(World)
+	// {
+	// 	UE_LOG(LogDTFluxAPI, Log, TEXT("World IS NOT NULL"));
+	//
+	// 	World->GetTimerManager().SetTimer(
+	// 		TestTimerHandle, this, &UDTFluxSubsystem::TestTimers, 1.0f, true);
+	// }
+	// else
+	// {
+	// 	UE_LOG(LogDTFluxAPI, Log, TEXT("World IS NULL:-D"));
+	// }
+
 	// WsServer Event binding
 }
 
@@ -111,12 +97,20 @@ void UDTFluxSubsystem::Deinitialize()
 {
 	if(WsClient)
 	{
-		UE_LOG(LogDTFluxAPI, Log, TEXT("WsClient not null"));
+		if (WsClient->Close())
+		{
+			UE_LOG(LogDTFluxAPI, Log, TEXT("WsClient is closed"));
+		}
+		UE_LOG(LogDTFluxAPI, Error, TEXT("WsClient can not be closed"));
 	}
-	else
-		UE_LOG(LogDTFluxAPI, Log, TEXT("WsClient has been GC'ed"));
+	UE_LOG(LogDTFluxAPI, Log, TEXT("WsClient has been GC'ed"));
 
 	Super::Deinitialize();
+}
+
+void UDTFluxSubsystem::InitDataStorage()
+{
+
 }
 
 bool UDTFluxSubsystem::ReloadSubsystem()
@@ -127,6 +121,8 @@ bool UDTFluxSubsystem::ReloadSubsystem()
 bool UDTFluxSubsystem::Reconnect()
 {
 	bool Result = WsClient->Close();
+	DataStorageRaceDataInit = false;
+	DataStorageTeamListInit = false;
 	if(!WsClient->IsConnected())
 		return WsClient->Connect( SubSettings.WebsocketAddress, SubSettings.WebsocketPort);
 	return false;
@@ -189,18 +185,7 @@ void UDTFluxSubsystem::Tick(float DeltaTime)
 	}
 }
 
-// TODO: IMPLEMENT THIS METHOD
-void UDTFluxSubsystem::WsSplitSensorReceivedInternal()
-{
-}
-// TODO: IMPLEMENT THIS METHOD
-void UDTFluxSubsystem::WsTeamUpdateReceivedInternal()
-{
-}
-// TODO: IMPLEMENT THIS METHOD
-void UDTFluxSubsystem::WsStatusUpdateReceivedInternal()
-{
-}
+
 
 void UDTFluxSubsystem::RequestRaceDatas()
 {
@@ -215,6 +200,7 @@ void UDTFluxSubsystem::RequestTeamList()
 void UDTFluxSubsystem::RequestContestRanking(const int ContestId)
 {
 	const FString Request = FString::Printf(TEXT("{\"path\": \"contest-ranking\", \"contestID\" : %i}"), ContestId);
+	UE_LOG(LogDTFluxAPI, Log, TEXT("Sending %s to server"), *Request);
 	WsClient->SendMessage(Request);
 }
 
@@ -247,8 +233,6 @@ void UDTFluxSubsystem::UpdateTeam()
 {
 }
 
-
-
 void UDTFluxSubsystem::UpdateContestRanking(const int ContestID)
 {
 	RequestContestRanking(ContestID);
@@ -266,116 +250,6 @@ void UDTFluxSubsystem::UpdateStageRanking(const int ContestID, const int StageID
 	}
 }
 
-
-
-
-EDTFluxResponseType UDTFluxSubsystem::FindResponseType(const FString& MessageReceived)
-{
-	EDTFluxResponseType ResponseType = UnknownResponse;
-	TSharedPtr<FJsonValue> JsonValue;
-
-	// Create a reader pointer to read the json data
-	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(MessageReceived);
-	if (FJsonSerializer::Deserialize(Reader, JsonValue))
-	{
-		// Get the value of the json object by field name
-		TSharedPtr<FJsonObject> Json = JsonValue->AsObject();
-		//Test
-		FString Type = Json->GetStringField(TEXT("type"));
-		if(Type == "")
-		{
-			// UE_LOG(LogDTFluxAPI, Log, TEXT("Type tupe does not exist"));
-
-			return EDTFluxResponseType::UnknownResponse;
-		}
-		if(Type.Contains("race-datas"))
-		{
-			// TODO : check if object data are valid
-			FDTFluxRaceDataResponse RaceDataResponse;
-			if(!FJsonObjectConverter::JsonObjectToUStruct<FDTFluxRaceDataResponse>
-				(Json.ToSharedRef(), &RaceDataResponse))
-			{
-				UE_LOG(LogDTFluxAPI, Error, TEXT("Message %s is not a valid \"race-data\" object"), *MessageReceived);
-				return EDTFluxResponseType::UnknownResponse;
-			}
-			UE_LOG(LogDTFluxAPI, Log, TEXT("Message %s is valid race-data object"), *MessageReceived);
-			ProcessRaceDataResponse(RaceDataResponse);
-			return EDTFluxResponseType::RaceData;
-		}
-		if(Type.Contains("constest-ranking"))
-		{
-			FDTFluxContestRankingResponse ContestRankingResponse;
-			if(!FJsonObjectConverter::JsonObjectToUStruct<FDTFluxContestRankingResponse>
-				(Json.ToSharedRef(), &ContestRankingResponse))
-			{
-				UE_LOG(LogDTFluxAPI, Error, TEXT("Message %s is not a valid \"contest-ranking\" object"), *MessageReceived);
-			}
-			// TODO : check if object data are valid
-			UE_LOG(LogDTFluxAPI, Log, TEXT("Message %s is valid \"contest-ranking\" object"), *MessageReceived);
-			ProcessContestRankingResponse(ContestRankingResponse);
-			return EDTFluxResponseType::ContestRanking;
-		}
-		if(Type.Contains("stage-ranking"))
-		{
-			FDTFluxStageRankingResponse StageRankingResponse;
-			if(!FJsonObjectConverter::JsonObjectToUStruct<FDTFluxStageRankingResponse>
-				(Json.ToSharedRef(), &StageRankingResponse))
-			{
-				UE_LOG(LogDTFluxAPI, Error, TEXT("Message %s is not a valid \"stage-ranking\" object"), *MessageReceived);
-			}
-			UE_LOG(LogDTFluxAPI, Log, TEXT("Message %s is valid \"stage-ranking\" object"), *MessageReceived);
-			if(StageRankingResponse.SplitID == -1)
-			{
-				ProcessSplitRankingResponse(StageRankingResponse);
-				return EDTFluxResponseType::SplitRanking;
-
-			}
-			ProcessStageRankingResponse(StageRankingResponse);
-			return EDTFluxResponseType::StageRanking;
-		}
-		if(Type.Contains("team-list"))
-		{
-			FDTFluxTeamListResponse TeamListResponse;
-			if( !FJsonObjectConverter::JsonObjectToUStruct
-				<FDTFluxTeamListResponse>(Json.ToSharedRef(), &TeamListResponse))
-			{
-				UE_LOG(LogDTFluxAPI, Error, TEXT("Message %s is not a valid team-list object"), *MessageReceived)
-				return EDTFluxResponseType::UnknownResponse;
-			}
-			UE_LOG(LogDTFluxAPI, Log, TEXT("Received team-list data"));
-			ProcessTeamListResponse(TeamListResponse);
-			// TODO : check if object data are valid
-			return EDTFluxResponseType::TeamList;
-		}
-		if(Type.Contains("team-update"))
-		{
-			// TODO : check if object data are valid
-			return EDTFluxResponseType::TeamUpdate;
-		}
-		if(Type.Contains("split-sensor"))
-		{
-			// TODO : check if object data are valid
-			FDTFluxSplitSensorResponse SplitSensorResponse;
-			if( !FJsonObjectConverter::JsonObjectToUStruct
-				<FDTFluxSplitSensorResponse>(Json.ToSharedRef(), &SplitSensorResponse))
-			{
-				UE_LOG(LogDTFluxAPI, Error, TEXT("Message %s is not a valid split-sensor data"), *MessageReceived)
-				return EDTFluxResponseType::UnknownResponse;
-			}
-			UE_LOG(LogDTFluxAPI, Log, TEXT("Received split-sensor data"));
-			// send the array to DataStorage;
-			return EDTFluxResponseType::SplitSensor;
-		}
-		if(Type.Contains("status-update"))
-		{
-			// TODO : check if object data are valid
-			return EDTFluxResponseType::StatusUpdate;
-		}
-	}
-	
-	return ResponseType;
-}
-
 /***
  * Timer handling
  ***/
@@ -391,6 +265,9 @@ void UDTFluxSubsystem::SetTimerEvent(const FDateTime& When)
 {
 	FTimespan TimeSpan = FDateTime::Now() - When;
 	UE_LOG(LogDTFluxAPI, Log, TEXT("TEST timer timeSpan Duration : %s"), *TimeSpan.GetDuration().ToString());
+	FOnTimer NewTimer;
+	// NewTimer.BindUFunction()
+	// AddTimer(When, )
 }
 
 
@@ -407,47 +284,169 @@ bool UDTFluxSubsystem::AddTimer(FDateTime Time, FOnTimer NewTimer)
 
 void UDTFluxSubsystem::WsConnected()
 {
-	OnWsConnected.Broadcast();
+	FDTFluxWsResponseEvent Event;
+	Event.WsResponseType = EDTFluxResponseType::WsConnected;
+	Event.RawData = "Connected";
+	if(WsClient->IsConnected())
+	{
+		UE_LOG(LogDTFluxAPI, Log, TEXT("Initializing DataStorage"));
+		UpdateRaceData();
+	}
+	OnWsEvent.Broadcast(Event);
 	UE_LOG(LogDTFluxAPI, Log, TEXT("Ws Connected"));
+
 }
 
 void UDTFluxSubsystem::WsReceivedMessage( const FString& MessageReceived)
 {
-	OnWsIncomingData.Broadcast(MessageReceived);
-	// UE_LOG(LogDTFluxAPI, Log, TEXT("Ws ReceivedMessage %s"), *MessageReceived);
-	// Find Data Object Type
-	EDTFluxResponseType Type = FindResponseType(MessageReceived);
-	switch(Type)
+	FDTFluxWsResponseEvent Event;
+	Event.WsResponseType = UnknownResponse;
+	Event.RawData = MessageReceived;
+	
+	TSharedPtr<FJsonValue> JsonValue;
+	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(MessageReceived);
+	if (FJsonSerializer::Deserialize(Reader, JsonValue))
 	{
-	case EDTFluxResponseType::TeamList:
-		break;
-	case EDTFluxResponseType::RaceData:
-		break;
-	case EDTFluxResponseType::ContestRanking:
-		break;
-	case EDTFluxResponseType::StageRanking:
-		break;
-	case EDTFluxResponseType::SplitRanking:
-		break;
-	case EDTFluxResponseType::TeamUpdate:
-		break;
-	default:
-		break;
+		TSharedPtr<FJsonObject> Json = JsonValue->AsObject();
+		FString Type = Json->GetStringField(TEXT("type"));
+		if(Type.Contains("race-datas"))
+		{
+			FDTFluxRaceDataResponse RaceDataResponse;
+			if(!FJsonObjectConverter::JsonObjectToUStruct<FDTFluxRaceDataResponse>
+				(Json.ToSharedRef(), &RaceDataResponse))
+			{
+				UE_LOG(LogDTFluxAPI, Error, TEXT("Message %s is not a valid \"race-data\" object"), *MessageReceived);
+			}
+			UE_LOG(LogDTFluxAPI, Log, TEXT("Message %s is valid race-data object"), *MessageReceived);
+			ProcessRaceDataResponse(RaceDataResponse);
+			if(!DataStorageRaceDataInit)
+			{
+				DataStorageRaceDataInit = true;
+				RequestTeamList();
+			}
+			Event.WsResponseType = RaceData;
+		}
+		if(Type.Contains("contest-ranking"))
+		{
+			FDTFluxContestRankingResponse ContestRankingResponse;
+			if(!FJsonObjectConverter::JsonObjectToUStruct<FDTFluxContestRankingResponse>
+				(Json.ToSharedRef(), &ContestRankingResponse))
+			{
+				UE_LOG(LogDTFluxAPI, Error, TEXT("Message %s is not a valid \"contest-ranking\" object"), *MessageReceived);
+			}
+			ProcessContestRankingResponse(ContestRankingResponse);
+			Event.WsResponseType = ContestRanking;
+
+		}
+		if(Type.Contains("stage-ranking"))
+		{
+			FDTFluxStageRankingResponse StageRankingResponse;
+			if(!FJsonObjectConverter::JsonObjectToUStruct<FDTFluxStageRankingResponse>
+				(Json.ToSharedRef(), &StageRankingResponse))
+			{
+				UE_LOG(LogDTFluxAPI, Error, TEXT("Message %s is not a valid \"stage-ranking\" object"), *MessageReceived);
+			}
+			UE_LOG(LogDTFluxAPI, Log, TEXT("\"stage-ranking\" object received"));
+			if(StageRankingResponse.SplitID == -1)
+			{
+				ProcessStageRankingResponse(StageRankingResponse);
+				Event.WsResponseType = StageRanking;
+			}
+			ProcessSplitRankingResponse(StageRankingResponse);
+			Event.WsResponseType = SplitRanking;
+
+		}
+		if(Type.Contains("team-list"))
+		{
+			FDTFluxTeamListResponse TeamListResponse;
+			if( !FJsonObjectConverter::JsonObjectToUStruct
+				<FDTFluxTeamListResponse>(Json.ToSharedRef(), &TeamListResponse))
+			{
+				UE_LOG(LogDTFluxAPI, Error, TEXT("Message %s is not a valid team-list object"), *MessageReceived)
+			}
+			UE_LOG(LogDTFluxAPI, Log, TEXT("Received team-list data"));
+			ProcessTeamListResponse(TeamListResponse);
+			if(!DataStorageTeamListInit)
+			{
+				DataStorageTeamListInit = true;
+				// Initialize contest-rankings
+				for(const auto& Contest: DataStorage->Contests)
+				{
+					RequestContestRanking(Contest.Id);
+					// Initialize stage-rankings
+					for(const auto Stage : Contest.Stages)
+					{
+						RequestStageRanking(Contest.Id, Stage.Id);
+					}
+				}
+			}
+			Event.WsResponseType = TeamList;
+		}
+		if(Type.Contains("team-update"))
+		{
+			FDTFluxTeamUpdateResponse TeamUpdateResponse;
+			if( !FJsonObjectConverter::JsonObjectToUStruct
+				<FDTFluxTeamUpdateResponse>(Json.ToSharedRef(), &TeamUpdateResponse))
+			{
+				UE_LOG(LogDTFluxAPI, Error, TEXT("Message %s is not a valid team-update object"), *MessageReceived)
+			}
+			UE_LOG(LogDTFluxAPI, Log, TEXT("Received team-update data"));
+			ProcessTeamUpdateResponse(TeamUpdateResponse);
+			Event.WsResponseType = TeamUpdate;
+		}
+		if(Type.Contains("split-sensor"))
+		{
+			FDTFluxSplitSensorResponse SplitSensorResponse;
+			if( !FJsonObjectConverter::JsonObjectToUStruct
+				<FDTFluxSplitSensorResponse>(Json.ToSharedRef(), &SplitSensorResponse))
+			{
+				UE_LOG(LogDTFluxAPI, Error, TEXT("Message %s is not a valid split-sensor data"), *MessageReceived)
+			}
+			UE_LOG(LogDTFluxAPI, Log, TEXT("Received split-sensor data"));
+			Event.WsResponseType = SplitSensor;
+
+		}
+		if(Type.Contains("status-update"))
+		{
+			FDTFluxStatusUpdateResponse StatusUpdateResponse;
+			if( !FJsonObjectConverter::JsonObjectToUStruct
+				<FDTFluxStatusUpdateResponse>(Json.ToSharedRef(), &StatusUpdateResponse))
+			{
+				UE_LOG(LogDTFluxAPI, Error, TEXT("Message %s is not a valid status-update data"), *MessageReceived)
+			}
+			UE_LOG(LogDTFluxAPI, Log, TEXT("Received status-update data %s"), *MessageReceived);
+			ProcessStatusUpdateResponse(StatusUpdateResponse);
+			Event.WsResponseType = StatusUpdate;
+
+		}
 	}
-	// Let datastorage Know that we received something
-	// DataStorage->UpdateDataStorage(MessageReceived);
+		OnWsEvent.Broadcast(Event);
 }
 
 void UDTFluxSubsystem::WsConnectionClosed(const FString& Reason)
 {
-	OnWsClosed.Broadcast(Reason);
-	UE_LOG(LogDTFluxAPI, Log, TEXT("Ws ConnectionClosed with reason %s"), *Reason);
+	UE_LOG(LogDTFluxAPI, Log, TEXT("Ws ConnectionClosed with reason %s trying to reconnect"), *Reason);
+
+	if(!WsClient->IsConnected()){}
+	WsClient->Connect( SubSettings.WebsocketAddress, SubSettings.WebsocketPort);
+	FDTFluxWsResponseEvent Event;
+	Event.WsResponseType = WsClosed;
+	Event.RawData = Reason;
+	OnWsEvent.Broadcast(Event);
 }
 
 void UDTFluxSubsystem::WsConnectionError(const FString& Error)
 {
-	OnWsError.Broadcast(Error);
-	UE_LOG(LogDTFluxAPI, Log, TEXT("Ws Error %s"), *Error);
+	UE_LOG(LogDTFluxAPI, Log, TEXT("Ws Error %s trying to reconnect"), *Error);
+	FDTFluxWsResponseEvent Event;
+	Event.WsResponseType = WsError;
+	Event.RawData = Error;
+	OnWsEvent.Broadcast(Event);
+	bool Result = WsClient->Close();
+	DataStorageRaceDataInit = false;
+	DataStorageTeamListInit = false;
+	if(!WsClient->IsConnected()){}
+		WsClient->Connect( SubSettings.WebsocketAddress, SubSettings.WebsocketPort);
 }
 
 bool UDTFluxSubsystem::IsConnected() const
@@ -459,14 +458,12 @@ void UDTFluxSubsystem::ProcessTeamListResponse(const FDTFluxTeamListResponse& Te
 {
 	for( const auto& TeamListItemResponse : TeamListResponse.Datas)
 	{
-		UE_LOG(LogDTFluxAPI, Log, TEXT("Sending Participant %s with Bib %d to DataStorage"), *TeamListItemResponse.LastName, TeamListItemResponse.Bib);
-
 		DataStorage->AddOrUpdateParticipant(TeamListItemResponse);
 	}
-	for(auto& Contest : DataStorage->Contests)
-	{
-		Contest.DumpParticipant();
-	}
+	// for(auto& Contest : DataStorage->Contests)
+	// {
+	// 	Contest.DumpParticipant();
+	// }
 	// UE_LOG(LogDTFluxAPI, Log, TEXT("New Particpant list Size %d"), DataStorage->GetParticipants().Num())
 
 	
@@ -478,60 +475,77 @@ void UDTFluxSubsystem::ProcessRaceDataResponse(const FDTFluxRaceDataResponse& Da
 	{
 		DataStorage->AddOrUpdateContest(ContestResponse);
 	}
-
-	UE_LOG(LogDTFluxAPI, Log, TEXT("New Contest Size %d"), DataStorage->Contests.Num())
+	FDTFluxWsResponseEvent Event;
+	Event.WsResponseType = RaceData;
+	Event.RawData = "race-data";
+	OnWsEvent.Broadcast(Event);
+	// UE_LOG(LogDTFluxAPI, Log, TEXT("New Contest Size %d"), DataStorage->Contests.Num())
 
 }
 
-
 void UDTFluxSubsystem::ProcessContestRankingResponse(const FDTFluxContestRankingResponse& ContestRankingResponse)
 {
-	TArray<FDTFluxContestRanking> NewRankings;
-	
-	for(const auto& TeamContestRankingResponse : ContestRankingResponse.Datas)
-	{
-		FDTFluxContestRanking NewRankingEl;
-		NewRankingEl.Participant = DataStorage->GetParticipant(ContestRankingResponse.ContestID, TeamContestRankingResponse.Bib);
-		NewRankingEl.Rank = TeamContestRankingResponse.Rank;
-		NewRankingEl.Gap = TeamContestRankingResponse.Gap;
-		NewRankingEl.Time = TeamContestRankingResponse.Time;
-		NewRankings.Add(NewRankingEl);
-	}
+	DataStorage->UpdateContestRanking(ContestRankingResponse);
+	FDTFluxWsResponseEvent Event;
+	Event.WsResponseType = ContestRanking;
+	Event.RawData = "contest-ranking";
+	OnWsEvent.Broadcast(Event);
 }
 
 void UDTFluxSubsystem::ProcessStageRankingResponse(const FDTFluxStageRankingResponse& StageRankingResponse)
 {
+	DataStorage->UpdateStageRanking(StageRankingResponse);
+	FDTFluxWsResponseEvent Event;
+	Event.WsResponseType = StageRanking;
+	Event.RawData = "stage-ranking";
+	OnWsEvent.Broadcast(Event);
 }
 
 void UDTFluxSubsystem::ProcessSplitRankingResponse(const FDTFluxStageRankingResponse& SplitRankingResponse)
 {
+	DataStorage->UpdateSplitRanking(SplitRankingResponse);
+	FDTFluxWsResponseEvent Event;
+	Event.WsResponseType = SplitRanking;
+	Event.RawData = "split-ranking";
+	OnWsEvent.Broadcast(Event);
 }
 
 void UDTFluxSubsystem::ProcessTeamUpdateResponse(const FDTFluxTeamUpdateResponse& TeamUpdateResponse)
 {
+	UE_LOG(LogDTFluxAPI, Log, TEXT("team-update received in c++"));
+	for(auto& TeamListRespItem: TeamUpdateResponse.Datas)
+	{
+		DataStorage->AddOrUpdateParticipant(TeamListRespItem);
+	}
+	FDTFluxWsResponseEvent Event;
+	Event.WsResponseType = TeamUpdate;
+	Event.RawData = "team-update";
+	OnWsEvent.Broadcast(Event);
 }
 
-void UDTFluxSubsystem::ProcessStatusUpdateResponse(const FDTFluxTeamUpdateResponse& TeamUpdateResponse)
+void UDTFluxSubsystem::ProcessStatusUpdateResponse(const FDTFluxStatusUpdateResponse& StatusUpdateResponse)
 {
-	
+	UE_LOG(LogDTFluxAPI, Log, TEXT("Processing status-update data"));
+	DataStorage->UpdateParticipantStatus(StatusUpdateResponse);
+	FDTFluxWsResponseEvent Event;
+	Event.WsResponseType = StatusUpdate;
+	Event.RawData = "status-update";
+	OnWsEvent.Broadcast(Event);
 }
 
 void UDTFluxSubsystem::ProcessSplitSensor(const FDTFluxSplitSensorResponse& SplitSensorResponse)
 {
-}
+	//
 
-TSharedPtr<FJsonObject> UDTFluxSubsystem::GetData(EDTFluxResponseType Type, const FString& Message)
-{
-	TSharedPtr<FJsonValue> JsonValue;
-	TSharedPtr<FJsonObject> Object;
-
-	// Create a reader pointer to read the json data
-	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Message);
-	if (FJsonSerializer::Deserialize(Reader, JsonValue))
+	FDTFluxWsResponseEvent Event;
+	Event.WsResponseType = SplitSensor;
+	Event.RawData = "split-sensor";
+	OnWsEvent.Broadcast(Event);
+	// determine if SplitSensorResponse come from a finisher spot 
+	if(DataStorage->IsFinisherSplit(SplitSensorResponse))
 	{
-		
+		FDTFluxFinisher Finisher = DataStorage->GetFinisherStatus(SplitSensorResponse);
+		OnFinisher.Broadcast(Finisher);
 	}
-	return Object;
 }
-
 
