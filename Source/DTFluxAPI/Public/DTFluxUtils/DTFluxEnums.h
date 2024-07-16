@@ -52,6 +52,7 @@ enum EDTFluxResponseType: uint8
 	WsConnected = 9 UMETA(DisplayName="WsConnected"),
 	WsClosed = 10 UMETA(DisplayName="WsClosed"),
 	WsError = 11 UMETA(DisplayName="WsError"),
+	ArchSelect = 12 UMETA(DisplayName="ArchSelect"),
 };
 
 UENUM(BlueprintType, Category="DTFlux|Subsystem")

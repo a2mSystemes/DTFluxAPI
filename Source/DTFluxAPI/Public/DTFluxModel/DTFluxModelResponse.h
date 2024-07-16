@@ -288,5 +288,27 @@ struct DTFLUXAPI_API FDTFluxTeamUpdateResponse
 	TArray<FDTFluxTeamListItemResponse> Datas;
 	
 };
+USTRUCT()
+struct DTFLUXAPI_API FDTFluxArchSelectResponseItem
+{
+	GENERATED_BODY()
+	UPROPERTY()
+	FString Type = "arch-select";
+	UPROPERTY()
+	int ContestId;
+	UPROPERTY()
+	int StageId;
+};
 
+USTRUCT()
+struct DTFLUXAPI_API FDTFluxArchSelectResponse
+{
+	GENERATED_BODY()
+	
+	UPROPERTY()
+	FString Type = "arch-select";
+	UPROPERTY()
+	TArray<FDTFluxArchSelectResponseItem> Datas;
 
+	
+};

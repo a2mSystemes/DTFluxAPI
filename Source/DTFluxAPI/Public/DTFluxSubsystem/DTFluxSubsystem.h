@@ -36,6 +36,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnContestBegin, int, ContestId);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStageBegin, int, ContestId, int, StageId);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnTimesUp, int, ContestId, int, StageId);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnRestTimeBegin, int, ContestId, int, StageId);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnArchSelect, int, ContestId, int, StageId);
+
 /**
  * DTFlux API Subsystem
  *
@@ -122,6 +124,8 @@ public:
 	FOnRestTimeBegin FOnRestTimeBegin;
 	UPROPERTY(BlueprintAssignable, Category="DTFlux|Events")
 	FOnRaceDataReceived OnRaceDataReceived;
+	UPROPERTY(BlueprintAssignable, Category="DTFlux|Events")
+	FOnArchSelect OnArchSelect;
 
 	// UPROPERTY(BlueprintReadWrite, Category="DTFlux|Subsystem|Websocket")
 	// int ReconnectTimeout = 60; //seconds
@@ -168,6 +172,8 @@ public:
 	UFUNCTION()
 	void ProcessSplitSensor(const FDTFluxSplitSensorResponse& SplitSensorResponse);
 
+	UFUNCTION()
+	void ProcessArchSelect(FDTFluxArchSelectResponseItem ArchSelectResponse);
 	
 	UFUNCTION()
 	void WsConnected();

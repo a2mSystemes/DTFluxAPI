@@ -77,13 +77,13 @@ void UDTFluxSubsystem::LoadConfig(const UDTFluxProjectSettings* Settings)
 	SubSettings.WebsocketPort = Settings->WebsocketServerPort;
 	SubSettings.WebsocketAddress = Settings->WebsocketServerAddress;
 	SubSettings.ProxyAddress = Settings->ProxyAddress;
-	SubSettings.ProxyPort = Settings->ProxyPort;
-	TMap<FString,FString> SettingsEndpoints;
-	SettingsEndpoints.Add(FString("race-data"), Settings->ProxyRaceDataEndpoint);
-	SettingsEndpoints.Add(FString("contest-ranking"), Settings->ProxyRankingEndpoint);
-	SettingsEndpoints.Add(FString("stage-ranking"), Settings->ProxyRankingEndpoint);
-	SettingsEndpoints.Add(FString("team-list"), Settings->ProxyTeamsEndpoint);
-	SubSettings.ProxyEndpoints = SettingsEndpoints;
+	// SubSettings.ProxyPort = Settings->ProxyPort;
+	// TMap<FString,FString> SettingsEndpoints;
+	// SettingsEndpoints.Add(FString("race-data"), Settings->ProxyRaceDataEndpoint);
+	// SettingsEndpoints.Add(FString("contest-ranking"), Settings->ProxyRankingEndpoint);
+	// SettingsEndpoints.Add(FString("stage-ranking"), Settings->ProxyRankingEndpoint);
+	// SettingsEndpoints.Add(FString("team-list"), Settings->ProxyTeamsEndpoint);
+	// SubSettings.ProxyEndpoints = SettingsEndpoints;
 }
 
 // Get project Settings
@@ -359,6 +359,22 @@ void UDTFluxSubsystem::WsReceivedMessage( const FString& MessageReceived)
 			Event.WsResponseType = StatusUpdate;
 
 		}
+		if(Type.Contains("broadcast-message"))
+		{
+			FDTFluxArchSelectResponse ArchSelectResponse;
+			if( !FJsonObjectConverter::JsonObjectToUStruct
+				<FDTFluxArchSelectResponse>(Json.ToSharedRef(), &ArchSelectResponse))
+			{
+				UE_LOG(LogDTFluxAPI, Error, TEXT("Message %s is not a valid broadcast-message data"), *MessageReceived)
+			}
+			for(const auto& ArchSelect : ArchSelectResponse.Datas)
+			{
+				ProcessArchSelect(ArchSelect);
+			}
+			Event.RawData = "ArchSelect";
+			Event.WsResponseType = ArchSelect;
+			UE_LOG(LogDTFluxAPI, Log, TEXT("Received broadcast-message data"));
+		}
 	}
 		OnWsEvent.Broadcast(Event);
 }
@@ -513,5 +529,10 @@ void UDTFluxSubsystem::ProcessSplitSensor(const FDTFluxSplitSensorResponse& Spli
 	Event.RawData = "split-sensor";
 	OnWsEvent.Broadcast(Event);
 
+}
+
+void UDTFluxSubsystem::ProcessArchSelect(FDTFluxArchSelectResponseItem ArchSelectResponse)
+{
+	OnArchSelect.Broadcast(ArchSelectResponse.ContestId, ArchSelectResponse.StageId);
 }
 

@@ -87,6 +87,6 @@ void UDTFluxCountDownComponent::CountUpTimerFn()
 void UDTFluxCountDownComponent::WaitingTimerFn()
 {
 
-	UE_LOG(LogDTFluxAPI, Log, TEXT("WAITING"));
+	// UE_LOG(LogDTFluxAPI, Log, TEXT("WAITING"));
 }
 

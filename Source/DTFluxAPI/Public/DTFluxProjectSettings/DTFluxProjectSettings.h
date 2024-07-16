@@ -22,48 +22,48 @@ public:
 
 	OnDTFluxProjectSettingsModified OnProjectSettingsModified;
 	
-	UPROPERTY(Category="DTFlux|Config|Race Result API", Config, EditAnywhere, BlueprintReadOnly)
-	int RaceResultPort = 80;
-	
-	UPROPERTY(Category="DTFlux|Config|Race Result API", Config, EditAnywhere, BlueprintReadOnly)
-	FString RaceResultUrl = "http://localhost";
-	
-	UPROPERTY(Category="DTFlux|Config|Race Result API", Config, EditAnywhere, BlueprintReadOnly)
-	FString RaceResultSessionID;
-	
-	UPROPERTY(Category="DTFlux|Config|Race Result API", Config, EditAnywhere, BlueprintReadOnly)
-	bool bAccessIsLocal = true;
-			
-	UPROPERTY(Category="DTFlux|Config|Race Result API", Config, EditAnywhere, BlueprintReadOnly)
-	FString StartListAccessToken;
-			
-	UPROPERTY(Category="DTFlux|Config|Race Result API", Config, EditAnywhere, BlueprintReadOnly)
-	FString GeneralClassificationAccessToken;
-				
-	UPROPERTY(Category="DTFlux|Config|Race Result API", Config, EditAnywhere, BlueprintReadOnly)
-	FString LiveStageResultsAccessToken ;
+	// UPROPERTY(Category="DTFlux|Config|Race Result API", Config, EditAnywhere, BlueprintReadOnly)
+	// int RaceResultPort = 80;
+	//
+	// UPROPERTY(Category="DTFlux|Config|Race Result API", Config, EditAnywhere, BlueprintReadOnly)
+	// FString RaceResultUrl = "http://localhost";
+	//
+	// UPROPERTY(Category="DTFlux|Config|Race Result API", Config, EditAnywhere, BlueprintReadOnly)
+	// FString RaceResultSessionID;
+	//
+	// UPROPERTY(Category="DTFlux|Config|Race Result API", Config, EditAnywhere, BlueprintReadOnly)
+	// bool bAccessIsLocal = true;
+	// 		
+	// UPROPERTY(Category="DTFlux|Config|Race Result API", Config, EditAnywhere, BlueprintReadOnly)
+	// FString StartListAccessToken;
+	// 		
+	// UPROPERTY(Category="DTFlux|Config|Race Result API", Config, EditAnywhere, BlueprintReadOnly)
+	// FString GeneralClassificationAccessToken;
+	// 			
+	// UPROPERTY(Category="DTFlux|Config|Race Result API", Config, EditAnywhere, BlueprintReadOnly)
+	// FString LiveStageResultsAccessToken ;
 // Proxy
 		
 	UPROPERTY(Category="DTFlux|Config|Chrono Proxy", Config, EditAnywhere, BlueprintReadOnly)
 	int WebsocketServerPort = 3000;
 	
 	UPROPERTY(Category="DTFlux|Config|Chrono Proxy", Config, EditAnywhere, BlueprintReadOnly)
-	FString WebsocketServerAddress = "ws://127.0.0.1";
+	FString WebsocketServerAddress = "ws://127.0.0.1/ws";
 	
 	UPROPERTY(Category="DTFlux|Config|Chrono Proxy", Config, EditAnywhere, BlueprintReadOnly)
 	FString ProxyAddress = "http://localhost";
 
-	UPROPERTY(Category="DTFlux|Chrono Proxy", Config, EditAnywhere, BlueprintReadOnly)
-	int ProxyPort = 8000;
-	
-	UPROPERTY(Category="DTFlux|Config|Chrono Proxy", Config, EditAnywhere, BlueprintReadOnly)
-	FString ProxyRootPath = "/endpoints";
-	UPROPERTY(Category="DTFlux|Config|Chrono Proxy", Config, EditAnywhere, BlueprintReadOnly)
-	FString ProxyRaceDataEndpoint;
-	UPROPERTY(Category="DTFlux|Config|Chrono Proxy", Config, EditAnywhere, BlueprintReadOnly)
-	FString ProxyRankingEndpoint;
-	UPROPERTY(Category="DTFlux|Config|Chrono Proxy", Config, EditAnywhere, BlueprintReadOnly)
-	FString ProxyTeamsEndpoint;
+	// UPROPERTY(Category="DTFlux|Chrono Proxy", Config, EditAnywhere, BlueprintReadOnly)
+	// int ProxyPort = 8000;
+	//
+	// UPROPERTY(Category="DTFlux|Config|Chrono Proxy", Config, EditAnywhere, BlueprintReadOnly)
+	// FString ProxyRootPath = "/endpoints";
+	// UPROPERTY(Category="DTFlux|Config|Chrono Proxy", Config, EditAnywhere, BlueprintReadOnly)
+	// FString ProxyRaceDataEndpoint;
+	// UPROPERTY(Category="DTFlux|Config|Chrono Proxy", Config, EditAnywhere, BlueprintReadOnly)
+	// FString ProxyRankingEndpoint;
+	// UPROPERTY(Category="DTFlux|Config|Chrono Proxy", Config, EditAnywhere, BlueprintReadOnly)
+	// FString ProxyTeamsEndpoint;
 
 	
 	//Server Config ****NOT USED****

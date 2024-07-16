@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "CrossCompilerCommon.h"
 #include "DTFluxModel/DTFluxModel.h"
 #include "DTFluxSubsystem/DTFluxSubsystem.h"
 #include "UObject/Object.h"
@@ -119,4 +120,5 @@ public:
 	UFUNCTION(BlueprintCallable, Category="DTFlux|Model|Helpers")
 	static EDTFluxStageStatusType GetStatusType(const int ContestID, const int StageID, UDTFluxDataStorage* DataStorage);
 
+	
 };
