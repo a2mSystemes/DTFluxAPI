@@ -53,3 +53,50 @@ enum EDTFluxResponseType: uint8
 	WsClosed = 10 UMETA(DisplayName="WsClosed"),
 	WsError = 11 UMETA(DisplayName="WsError"),
 };
+
+UENUM(BlueprintType, Category="DTFlux|Subsystem")
+enum EDTFluxSplitType : uint8
+{
+	UnknownSplitType = 0 UMETA(DisplayName="UnknownSplitType"),
+	NormalSplit = 1 UMETA(DisplayName="NormalSplit"),
+	PreFinnishSplit = 2 UMETA(DisplayName="PreFinnishSplit"),
+	FinishSplit = 3 UMETA(DisplayName="FinishSplit"),
+};
+
+
+UENUM(BlueprintType, Category="DTFlux|DataStorage")
+// ReSharper disable once IdentifierTypo
+enum EDTFluxDataStorageEventType : uint8
+{
+	UnknownEvent = 0 UMETA(DisplayName="ParticipantUpdateEvent"),
+	ParticipantCreateEvent = 1 UMETA(DisplayName="ParticipantUpdateEvent"),
+	ParticipantUpdateEvent = 2 UMETA(DisplayName="ParticipantUpdateEvent"),
+	ParticipantDeleteEvent = 3 UMETA(DisplayName="ParticipantDeleteEvent"),
+	ParticipantStatusUpdateEvent = 4 UMETA(DisplayName="ParticipantUpdateEvent"),
+	RaceDataCreateEvent = 5 UMETA(DisplayName="RaceDataCreateEvent"),
+	RaceDataUpdateEvent = 6 UMETA(DisplayName="RaceDataUpdateEvent"),
+	RaceDataDeleteEvent = 7 UMETA(DisplayName="RaceDataDeleteEvent"),
+	ContestRankingUpdate = 8 UMETA(DisplayName="ContestRankingUpdate"),
+	StageRankingUpdate = 9 UMETA(DisplayName="StageRankingUpdate"),
+	SplitRankingUpdate = 10 UMETA(DisplayName="SplitRankingUpdate"),
+};
+
+
+UENUM()
+enum EDTFluxTimerEventType : uint8
+{
+	StageStart = 0 UMETA(DisplayName="StageStart"),
+	StageCutOff = 1 UMETA(DisplayName="StageCutOff"),
+
+};
+
+UENUM()
+enum EDTFluxStageStatusType : uint8
+{
+	UnknownStatus = 0 UMETA(DisplayName="UnknownStatus"),
+	StageWaiting = 1 UMETA(DisplayName="StageWaiting"),
+	StageStarted = 2 UMETA(DisplayName="StageStarted"),
+	StageEnded = 3 UMETA(DisplayName="StageCutOff")
+};
+
+

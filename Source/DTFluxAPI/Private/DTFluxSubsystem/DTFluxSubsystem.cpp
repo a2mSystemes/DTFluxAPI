@@ -34,63 +34,7 @@ void UDTFluxSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	FDateTime Now = FDateTime::Now();
 	FDateTime Send1Min = Now + FTimespan::FromMinutes(1);
 	UE_LOG(LogDTFluxAPI, Log, TEXT("TEST timer timeSpan Duration : %s"), *Send1Min.ToString());
-	// SetTimerEvent( Send1Min );
-	// UWorld* World = nullptr;
-	// TIndirectArray<FWorldContext> WorldCtx = GEngine->GetWorldContexts();
-	// for(const auto& Ctx : WorldCtx)
-	// {
-	// 	EWorldType::Type Type = Ctx.WorldType.GetValue();
-	// 	switch(Type)
-	// 	{
-	// 	case EWorldType::None:
-	// 		UE_LOG(LogDTFluxAPI, Log, TEXT("Ctx world is None "));
-	// 		break;
-	//
-	// 	case EWorldType::Editor:
-	// 		UE_LOG(LogDTFluxAPI, Log, TEXT("Ctx world is EDITOR "));
-	// 		break;
-	//
-	// 	case EWorldType::Game:
-	// 		UE_LOG(LogDTFluxAPI, Log, TEXT("Ctx world is GAME "));
-	// 		break;
-	//
-	// 	case EWorldType::GamePreview :
-	// 		UE_LOG(LogDTFluxAPI, Log, TEXT("Ctx world is GamePreview "));
-	// 		break;
-	//
-	// 	case EWorldType::EditorPreview:
-	// 		UE_LOG(LogDTFluxAPI, Log, TEXT("Ctx world is EditorPreview "));
-	// 		break;
-	//
-	// 	case EWorldType::Inactive:
-	// 		UE_LOG(LogDTFluxAPI, Log, TEXT("Ctx world is Inactive "));
-	// 		break;
-	// 		
-	// 	case EWorldType::PIE:
-	// 		UE_LOG(LogDTFluxAPI, Log, TEXT("Ctx world is PIE "));
-	// 		break;
-	//
-	// 	case EWorldType::GameRPC:
-	// 		UE_LOG(LogDTFluxAPI, Log, TEXT("Ctx world is GameRPC "));
-	// 		break;
-	//
-	// 	default:
-	// 		break;
-	// 	}
-	// }
-	// if(World)
-	// {
-	// 	UE_LOG(LogDTFluxAPI, Log, TEXT("World IS NOT NULL"));
-	//
-	// 	World->GetTimerManager().SetTimer(
-	// 		TestTimerHandle, this, &UDTFluxSubsystem::TestTimers, 1.0f, true);
-	// }
-	// else
-	// {
-	// 	UE_LOG(LogDTFluxAPI, Log, TEXT("World IS NULL:-D"));
-	// }
 
-	// WsServer Event binding
 }
 
 void UDTFluxSubsystem::Deinitialize()
@@ -185,8 +129,6 @@ void UDTFluxSubsystem::Tick(float DeltaTime)
 	}
 }
 
-
-
 void UDTFluxSubsystem::RequestRaceDatas()
 {
 	WsClient->SendMessage(TEXT("{\"path\": \"race-datas\"}"));
@@ -260,7 +202,6 @@ void UDTFluxSubsystem::BroadcastTimerEvent()
 
 }
 
-
 void UDTFluxSubsystem::SetTimerEvent(const FDateTime& When)
 {
 	FTimespan TimeSpan = FDateTime::Now() - When;
@@ -270,13 +211,11 @@ void UDTFluxSubsystem::SetTimerEvent(const FDateTime& When)
 	// AddTimer(When, )
 }
 
-
 bool UDTFluxSubsystem::AddTimer(FDateTime Time, FOnTimer NewTimer)
 {
 	Timer.Add(Time, NewTimer);
 	return true;
 }
-
 
 /**
  * END TIMER HANDLING
@@ -403,6 +342,7 @@ void UDTFluxSubsystem::WsReceivedMessage( const FString& MessageReceived)
 				UE_LOG(LogDTFluxAPI, Error, TEXT("Message %s is not a valid split-sensor data"), *MessageReceived)
 			}
 			UE_LOG(LogDTFluxAPI, Log, TEXT("Received split-sensor data"));
+			ProcessSplitSensor(SplitSensorResponse);
 			Event.WsResponseType = SplitSensor;
 
 		}
@@ -479,6 +419,7 @@ void UDTFluxSubsystem::ProcessRaceDataResponse(const FDTFluxRaceDataResponse& Da
 	Event.WsResponseType = RaceData;
 	Event.RawData = "race-data";
 	OnWsEvent.Broadcast(Event);
+	OnRaceDataReceived.Broadcast();
 	// UE_LOG(LogDTFluxAPI, Log, TEXT("New Contest Size %d"), DataStorage->Contests.Num())
 
 }
@@ -537,15 +478,40 @@ void UDTFluxSubsystem::ProcessSplitSensor(const FDTFluxSplitSensorResponse& Spli
 {
 	//
 
+	for(auto& SplitSensorItem : SplitSensorResponse.Datas)
+	{
+		FDTFluxSplitRanking NewRanking = DataStorage->AddSplitRanking(SplitSensorItem);
+		UE_LOG(LogDTFluxAPI, Log, TEXT("Checking SplitStatus ..."))
+		EDTFluxSplitType SplitType = DataStorage->GetSplitStatus(SplitSensorItem.ContestID,
+			SplitSensorItem.StageID, SplitSensorItem.SplitID);
+		switch(SplitType)
+		{
+		case PreFinnishSplit:
+			UE_LOG(LogDTFluxAPI, Warning, TEXT("SplitSensor %d for Stage%02d in Contest%02d is a Prefinish Sensor"),
+				SplitSensorItem.SplitID, SplitSensorItem.StageID, SplitSensorItem.ContestID);
+			OnSpotter.Broadcast(NewRanking);
+			break;
+		case FinishSplit:
+			UE_LOG(LogDTFluxAPI, Warning, TEXT("SplitSensor %d for Stage%02d in Contest%02d is a Finish Sensor"),
+				SplitSensorItem.SplitID, SplitSensorItem.StageID, SplitSensorItem.ContestID);
+			OnFinisher.Broadcast(NewRanking);
+			break;
+		case NormalSplit:
+			UE_LOG(LogDTFluxAPI, Warning, TEXT("SplitSensor %d for Stage%02d in Contest%02d is a Normal Split"),
+			SplitSensorItem.SplitID, SplitSensorItem.StageID, SplitSensorItem.ContestID);
+			OnSplitSensor.Broadcast(NewRanking);
+			break;
+		default:
+			UE_LOG(LogDTFluxAPI, Error, TEXT("SplitSensor %d for Stage%02d in Contest%02d %s"),
+				SplitSensorItem.SplitID, SplitSensorItem.StageID, SplitSensorItem.ContestID,
+				*UEnum::GetValueAsString(SplitType));
+			break;
+		}
+	}
 	FDTFluxWsResponseEvent Event;
 	Event.WsResponseType = SplitSensor;
 	Event.RawData = "split-sensor";
 	OnWsEvent.Broadcast(Event);
-	// determine if SplitSensorResponse come from a finisher spot 
-	if(DataStorage->IsFinisherSplit(SplitSensorResponse))
-	{
-		FDTFluxFinisher Finisher = DataStorage->GetFinisherStatus(SplitSensorResponse);
-		OnFinisher.Broadcast(Finisher);
-	}
+
 }
 

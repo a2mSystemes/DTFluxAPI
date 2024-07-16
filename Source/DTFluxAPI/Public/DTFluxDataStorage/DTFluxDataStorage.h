@@ -16,26 +16,9 @@ struct FDTFluxParticipant;
 struct FDTFluxStage;
 struct FDTFluxContest;
 
-UENUM(BlueprintType, Category="DTFlux|DataStorage")
-// ReSharper disable once IdentifierTypo
-enum EDTFluxDataStorageEventType : uint8
-{
-	UnknownEvent = 0 UMETA(DisplayName="ParticipantUpdateEvent"),
-	ParticipantCreateEvent = 1 UMETA(DisplayName="ParticipantUpdateEvent"),
-	ParticipantUpdateEvent = 2 UMETA(DisplayName="ParticipantUpdateEvent"),
-	ParticipantDeleteEvent = 3 UMETA(DisplayName="ParticipantUpdateEvent"),
-	ParticipantStatusUpdateEvent = 4 UMETA(DisplayName="ParticipantUpdateEvent"),
-	RaceDataCreateEvent = 5 UMETA(DisplayName="ParticipantUpdateEvent"),
-	RaceDataUpdateEvent = 6 UMETA(DisplayName="ParticipantUpdateEvent"),
-	RaceDataDeleteEvent = 7 UMETA(DisplayName="ParticipantUpdateEvent"),
-	ContestRankingUpdate = 8 UMETA(DisplayName="ParticipantUpdateEvent"),
-	StageRankingUpdate = 9 UMETA(DisplayName="ParticipantUpdateEvent"),
-	SplitRankingUpdate = 10 UMETA(DisplayName="ParticipantUpdateEvent"),
-};
-
-
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDataStorageUpdated, FString, What);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDataStorageInit);
 
 UCLASS(BlueprintType, Category="DTFlux|Datastorage")
 class DTFLUXAPI_API UDTFluxDataStorage : public UObject
@@ -46,7 +29,12 @@ class DTFLUXAPI_API UDTFluxDataStorage : public UObject
 
 public:
 
- UPROPERTY(BlueprintReadOnly, Category="DTFlux|DataStorage")
+	UPROPERTY(BlueprintAssignable, Category="DTFlux|DataStorage|Event")
+	FOnDataStorageInit OnDataStorageInit;
+	UPROPERTY(BlueprintAssignable, Category="DTFlux|DataStorage|Event")
+	FOnDataStorageUpdated OnDataStorageUpdated;
+	
+	UPROPERTY(BlueprintReadOnly, Category="DTFlux|DataStorage")
 	TArray<FDTFluxContest> Contests;
 	UPROPERTY(BlueprintReadOnly, Category="DTFlux|DataStorage")
 	int CurrentStageId = 0;
@@ -70,11 +58,12 @@ public:
 
 	
 	UFUNCTION(BlueprintCallable, Category="DTFlux|DataStorage")
-	bool GetContest(FDTFluxContest& OutContest, const int& ContestId);
+	bool GetContest(const int ContestId, FDTFluxContest& OutContest);
 	UFUNCTION(BlueprintCallable, Category="DTFlux|DataStorage")
 	TArray<FDTFluxStage> GetStages(const int ContestId);
 	UFUNCTION(BlueprintCallable, Category="DTFlux|DataStorage")
-	bool GetStage( FDTFluxStage& Stage,const int& StageId = -1);
+	bool GetStage( const int ContestId, const int StageId, FDTFluxStage& OutStage);
+	
 	UFUNCTION(BlueprintCallable, Category="DTFlux|DataStorage")
 	TArray<FDTFluxParticipant> GetParticipants(const int ContestId = -1);
 	UFUNCTION()
@@ -123,6 +112,13 @@ public:
 	void ChangeCurrentContest();
 	UFUNCTION(BlueprintCallable, Category="DTFlux|DataStorage")
 	const FString GetConcurrentFormatedName( int Bib, bool Truncate = true, int MaxSize = 20);
-
-
+	UFUNCTION()
+	bool GetFirstStageOfContest(const int ContestId, FDTFluxStage& Stage);
+	void DumpContest();
+	UFUNCTION()
+	bool GetSplit(const int ContestID, const int StageID, const int SplitID, FDTFluxSplit& OutSplit);
+	UFUNCTION()
+	FDTFluxSplitRanking AddSplitRanking(const FDTFluxSplitSensorItemResponse& SplitSensorItem);
+	UFUNCTION()
+	EDTFluxSplitType GetSplitStatus(int ContestID, int StageID, int SplitID);
 };

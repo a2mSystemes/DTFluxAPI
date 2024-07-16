@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AvaText3DComponent.h"
 #include "Components/ActorComponent.h"
+#include "DTFluxDataStorage/DTFluxDataStorage.h"
 #include "DTFluxCountDownComponent.generated.h"
 
 
@@ -35,11 +36,12 @@ protected:
 	int64 InternalDuration;
 	bool IsWaiting;
 	bool IsCounting;
+	UDTFluxDataStorage* DataStorage;
 
 	
 
 public:
-
+	
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Counter")
 	FString EndString;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Counter")
@@ -51,11 +53,21 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
+
+	
 	UFUNCTION(BlueprintCallable, Category="DTFlux|Counter")
 	void SetGoTime(FDateTime NewGoTime);
 	UFUNCTION(BlueprintCallable, Category="DTFlux|Counter")
 	void SetDuration(int32 NewDuration);
 
+	// set the current stage
+	UFUNCTION(BlueprintCallable, Category="DTFlux|Counter")
+	void SetStage(const int ContestId, const int StageId){};
+	
+	// set the current contest
+	UFUNCTION(BlueprintCallable, Category="DTFlux|Counter")
+	void SetContest(const int ContestId){};
+	
 	UFUNCTION(BlueprintCallable, Category="DTFlux|Counter")
 	void SetTarget(UAvaText3DComponent* TextComponent);
 

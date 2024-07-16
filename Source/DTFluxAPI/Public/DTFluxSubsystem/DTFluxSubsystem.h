@@ -26,9 +26,12 @@ class UDTFluxProjectSettings;
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTimerTriggered);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRaceDataReceived);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnTimer, FString, TimerName);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWsEvent, FDTFluxWsResponseEvent, WsResponseEvent);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFinisher, FDTFluxFinisher, Finisher);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFinisher, FDTFluxSplitRanking, FinisherData);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSpotter, FDTFluxSplitRanking, SpotterData);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSplitSensor, FDTFluxSplitRanking, ParticipantSplitData);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnContestBegin, int, ContestId);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStageBegin, int, ContestId, int, StageId);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnTimesUp, int, ContestId, int, StageId);
@@ -104,6 +107,10 @@ public:
 	UPROPERTY(BlueprintAssignable, Category="DTFlux|Events")
 	FOnWsEvent OnWsEvent;
 	UPROPERTY(BlueprintAssignable, Category="DTFlux|Events")
+	FOnSplitSensor OnSplitSensor;
+	UPROPERTY(BlueprintAssignable, Category="DTFlux|Events")
+	FOnSpotter OnSpotter;
+	UPROPERTY(BlueprintAssignable, Category="DTFlux|Events")
 	FOnFinisher OnFinisher;
 	UPROPERTY(BlueprintAssignable, Category="DTFlux|Events")
 	FOnContestBegin OnContestBegin;
@@ -113,6 +120,8 @@ public:
 	FOnTimesUp OnTimesUp;
 	UPROPERTY(BlueprintAssignable, Category="DTFlux|Events")
 	FOnRestTimeBegin FOnRestTimeBegin;
+	UPROPERTY(BlueprintAssignable, Category="DTFlux|Events")
+	FOnRaceDataReceived OnRaceDataReceived;
 
 	// UPROPERTY(BlueprintReadWrite, Category="DTFlux|Subsystem|Websocket")
 	// int ReconnectTimeout = 60; //seconds
@@ -172,14 +181,5 @@ public:
 	UFUNCTION(BlueprintCallable, Category="DTFlux|subsystem")
 	bool IsConnected() const;
 
-
-
-	FTimerHandle TestTimerHandle;
-
-	
-	void TestTimers()
-	{
-		UE_LOG(LogDTFluxAPI, Log, TEXT("IT WORKS !!!!"));
-	}
 };
 

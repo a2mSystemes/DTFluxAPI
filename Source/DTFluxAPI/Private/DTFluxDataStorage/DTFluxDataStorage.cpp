@@ -3,7 +3,6 @@
 
 #include "DTFluxDataStorage/DTFluxDataStorage.h"
 
-// #include "AsyncTreeDifferences.h"
 #include "DTFluxAPILog.h"
 #include "DTFluxModel/DTFluxModel.h"
 
@@ -138,72 +137,109 @@ FDTFluxFinisher UDTFluxDataStorage::GetFinisherStatus(const FDTFluxSplitSensorRe
 	return Finisher;
 }
 
-bool UDTFluxDataStorage::GetContest(FDTFluxContest& OutContest, const int& ContestId)
+bool UDTFluxDataStorage::GetContest(const int ContestId, FDTFluxContest& OutContest )
 {
-	// Current contest requested
-	if(ContestId == -1)
+	// UE_LOG(LogDTFluxAPI, Warning, TEXT("RequestedContest %d"),
+	// 	ContestId);
+	for(auto& Contest : Contests)
 	{
-		FDateTime Now = FDateTime::Now();
-		for(auto& Contest : Contests)
+	// 	UE_LOG(LogDTFluxAPI, Warning, TEXT("Checking Contest %d"),
+	// Contest.Id);
+		if(Contest.Id == ContestId)
 		{
-			for( auto& Stage : Contest.Stages)
+			// UE_LOG(LogDTFluxAPI, Warning, TEXT("Found Contest %d"),
+			// Contest.Id);
+			OutContest = Contest;
+			return true;
+		}
+	}
+	// UE_LOG(LogDTFluxAPI, Error, TEXT("Contest %d not Found "),
+	// ContestId);
+	return false;
+}
+
+bool UDTFluxDataStorage::GetStage(const int ContestId, const int StageId, FDTFluxStage& OutStage)
+{
+	FDTFluxContest Contest;
+	// UE_LOG(LogDTFluxAPI, Warning, TEXT("RequestedStage %d in Contest%02d ****"),
+	// ContestId, StageId);
+	if(GetContest(ContestId, Contest))
+	{
+		for(auto & Stage: Contest.Stages)
+		{
+// 			UE_LOG(LogDTFluxAPI, Warning, TEXT("Checking Stage %d "),
+// Stage.Id);
+			if(Stage.Id == StageId)
 			{
-				if(Stage.StartTime >= Now && Stage.EndTime <= Now)
-				{
-					//We have a winner
-					OutContest = Contest;
-					return true;
-				}
+
+				// UE_LOG(LogDTFluxAPI, Warning, TEXT("Found %s in Stage ***"),
+		// *Stage.Name);
+				OutStage = Stage;
+				return true;
 			}
 		}
 	}
-	else
+	// UE_LOG(LogDTFluxAPI, Error, TEXT("Stage %d Not Found in Contest %d ****"),
+	// StageId, ContestId);
+	return false;
+}
+
+bool UDTFluxDataStorage::GetSplit(const int ContestId, const int StageId, const int SplitId, FDTFluxSplit& OutSplit)
+{
+	// DumpContest();
+	FDTFluxStage Stage;
+	// UE_LOG(LogDTFluxAPI, Warning, TEXT("RequestedSplit %d in Stage%02d of Contest%02d"),
+	// 	ContestId, StageId, SplitId);
+	if(GetStage(ContestId, StageId, Stage))
 	{
-		for( auto& Contest : Contests)
+		for(auto& Split: Stage.Splits)
 		{
-			if(Contest.Id == ContestId)
+			if(Split.Id == SplitId)
 			{
-				OutContest = Contest;
+				// UE_LOG(LogDTFluxAPI, Warning, TEXT("Get Split %s in Stage%02d of Contest%02d"),
+				// *Split.Name, StageId, SplitId);
+				OutSplit = Split;
 				return true;
 			}
 		}
 	}
 	return false;
+
 }
 
-bool UDTFluxDataStorage::GetStage(FDTFluxStage& CurrentStage, const int& StageId)
+FDTFluxSplitRanking UDTFluxDataStorage::AddSplitRanking(const FDTFluxSplitSensorItemResponse& SplitSensorItem)
 {
-	// Current contest requested
-	if(StageId == -1)
+	FDTFluxSplitRanking NewSplitRanking;
+	NewSplitRanking.Bib = SplitSensorItem.Bib;
+	NewSplitRanking.Gap = SplitSensorItem.Gap;
+	NewSplitRanking.Rank = SplitSensorItem.Rank;
+	NewSplitRanking.Time = SplitSensorItem.Time;
+	FDTFluxSplit Split;
+	if(GetSplit(SplitSensorItem.ContestID, SplitSensorItem.StageID,
+		SplitSensorItem.SplitID, Split))
 	{
-		FDateTime Now = FDateTime::Now();
-		for(auto& Contest : Contests)
-		{
-			for( auto& Stage : Contest.Stages)
-			{
-				if(StageId <= -1)
-				{
-					if(Stage.StartTime >= Now && Stage.EndTime <= Now)
-					{
-						//We have a winner for current stage
-						CurrentStage = Stage;
-						return true;
-					}
-				}else
-				{
-					if(Stage.Id == StageId)
-					{
-						//We have a winner for the search stage
-						CurrentStage = Stage;
-						return true;
-					}
-				}
-
-			}
-		}
+		Split.SplitRankings.Add(NewSplitRanking);
+		return NewSplitRanking;
 	}
-	return false;
+	UE_LOG(LogDTFluxAPI, Error,
+		TEXT("Error, Cannot process split sensor."))
+	UE_LOG(LogDTFluxAPI, Error, TEXT("Split %d from stage %d of Contest %d does not exist"),
+		SplitSensorItem.SplitID, SplitSensorItem.StageID, SplitSensorItem.ContestID);
+	return NewSplitRanking;
 }
+
+EDTFluxSplitType UDTFluxDataStorage::GetSplitStatus(int ContestID, int StageID, int SplitID)
+{
+	FDTFluxStage Stage;
+	if(GetStage(ContestID, StageID, Stage))
+	{
+		int SplitCount = Stage.Splits.Num();
+		FDTFluxSplit S;
+		return Stage.GetSplitType(SplitID);
+	}
+	return EDTFluxSplitType::UnknownSplitType;
+}
+
 
 TArray<FDTFluxParticipant> UDTFluxDataStorage::GetParticipants(const int ContestId)
 {
@@ -254,6 +290,7 @@ void UDTFluxDataStorage::AddOrUpdateContest(const FDTFluxContestResponse& Contes
 	FDTFluxContest Contest;
 	bool NewContest = false;
 	int ContestIdx = 0;
+	// UE_LOG(LogDTFluxAPI, Warning, TEXT("DateTime Json Contest \"%s\""), *ContestResponse.Date.ToString() );
 	if(!Contests.IsEmpty() )
 	{
 		for(auto& OldContest: Contests)
@@ -277,6 +314,7 @@ void UDTFluxDataStorage::AddOrUpdateContest(const FDTFluxContestResponse& Contes
 	// Updating values
 	Contest.Id = ContestResponse.Id;
 	Contest.Name = ContestResponse.Name;
+	Contest.Date = ContestResponse.Date;
 	TArray<FDTFluxSplit> Splits;
 	for(auto Split: ContestResponse.Splits)
 	{
@@ -290,18 +328,32 @@ void UDTFluxDataStorage::AddOrUpdateContest(const FDTFluxContestResponse& Contes
 		FDTFluxStage Stage;
 		Stage.Id = StageResp.Id;
 		Stage.Name = StageResp.Name;
-		FDateTime::Parse(StageResp.StartTime, Stage.StartTime);
-		FDateTime::Parse(StageResp.EndTime, Stage.EndTime);
+		// UE_LOG(LogDTFluxAPI, Warning, TEXT("ContestResponse.Stage StartTime = %s"), *StageResp.StartTime);
+		// UE_LOG(LogDTFluxAPI, Warning, TEXT("ContestResponse.Stage EndTime = %s"), *StageResp.EndTime);
+		// UE_LOG(LogDTFluxAPI, Warning, TEXT("ContestResponse.Stage CutOff = %s"), *StageResp.CutOff);		
+		FTimespan StartTimeSpan;
+		FTimespan::Parse(StageResp.StartTime, StartTimeSpan);
+		FTimespan EndTimeSpan;
+		FTimespan::Parse(StageResp.EndTime, EndTimeSpan);
+		FTimespan CutOffTimeSpan;
+		FTimespan::Parse(StageResp.CutOff, CutOffTimeSpan);
+		Stage.StartTime = Contest.Date + StartTimeSpan;
+		Stage.EndTime = Contest.Date + EndTimeSpan;
+		Stage.CutOff = Stage.StartTime + CutOffTimeSpan;
+		// UE_LOG(LogDTFluxAPI, Warning, TEXT("STAGE StartTime = %s"), *Stage.StartTime.ToString());
+		// UE_LOG(LogDTFluxAPI, Warning, TEXT("STAGE EndTime = %s"), *Stage.EndTime.ToString());
+		// UE_LOG(LogDTFluxAPI, Warning, TEXT("STAGE CutOff = %s"), *Stage.CutOff.ToString());
+
 		Stage.Splits = Splits;
 		Contest.Stages.Add(Stage);
 	}
 	if(NewContest)
 	{
-		Contest.Dump();
+		// Contest.Dump();
 		Contests.Add(Contest);
 		return;
 	}
-	Contest.Dump();
+	// Contest.Dump();
 	Contests.RemoveAt(ContestIdx);
 	Contests.Insert(Contest, ContestIdx);
 	// handle updating contest
@@ -309,10 +361,10 @@ void UDTFluxDataStorage::AddOrUpdateContest(const FDTFluxContestResponse& Contes
 
 void UDTFluxDataStorage::AddOrUpdateParticipant(const FDTFluxTeamListItemResponse& TeamListItemResponse)
 {
-	UE_LOG(LogDTFluxAPI, Log, TEXT("In DataStorage::AddOrUpdateParticipant"));
-	UE_LOG(LogDTFluxAPI, Log, TEXT("AboutToUpdateOrAdd Participant %d %s %s in Contest%02d "),
-		TeamListItemResponse.Bib, *TeamListItemResponse.FirstName, *TeamListItemResponse.LastName,
-		TeamListItemResponse.ContestId);
+	// UE_LOG(LogDTFluxAPI, Log, TEXT("In DataStorage::AddOrUpdateParticipant"));
+	// UE_LOG(LogDTFluxAPI, Log, TEXT("AboutToUpdateOrAdd Participant %d %s %s in Contest%02d "),
+		// TeamListItemResponse.Bib, *TeamListItemResponse.FirstName, *TeamListItemResponse.LastName,
+		// TeamListItemResponse.ContestId);
 	FDTFluxParticipant Participant;
 	Participant.Bib = TeamListItemResponse.Bib;
 	Participant.Category = TeamListItemResponse.Category;
@@ -330,15 +382,15 @@ void UDTFluxDataStorage::AddOrUpdateParticipant(const FDTFluxTeamListItemRespons
 	{
 		if(Contest.Id == TeamListItemResponse.ContestId)
 		{
-			UE_LOG(LogDTFluxAPI, Log, TEXT("AboutToUpdateOrAdd Participant %d %s %s in Contest%02d "),
-				Participant.Bib, *Participant.Person1.FirstName, *Participant.Person1.LastName,
-				Contest.Id);
+			// UE_LOG(LogDTFluxAPI, Log, TEXT("AboutToUpdateOrAdd Participant %d %s %s in Contest%02d "),
+			// 	Participant.Bib, *Participant.Person1.FirstName, *Participant.Person1.LastName,
+			// 	Contest.Id);
 
 			Contest.AddParticipant(Participant);
 			return;
 		}
-		UE_LOG(LogDTFluxAPI, Log, TEXT("Contest%02d has now %04d Participants"), Contest.Id,
-			Contest.Participants.Num());
+		// UE_LOG(LogDTFluxAPI, Log, TEXT("Contest%02d has now %04d Participants"), Contest.Id,
+		// 	Contest.Participants.Num());
 
 	}
 }
@@ -389,16 +441,21 @@ void UDTFluxDataStorage::UpdateStageRanking(const FDTFluxStageRankingResponse& S
 					// UE_LOG(LogDTFluxAPI, Log, TEXT("Found Stage::%02d "),Stage.Id);
 					// Cleaning StageRanking
 					Stage.StageRanking.Empty();
-					for(auto& StageRanking: StageRankingResponse.Datas )
+					for(auto& StageRankingResp: StageRankingResponse.Datas )
 					{
 						FDTFluxStageRanking NewStageRanking;
-						NewStageRanking.TimeRun = StageRanking.TimeRun;
-						NewStageRanking.TimeStart = StageRanking.TimeStart;
-						NewStageRanking.TimeTransition = StageRanking.TimeTransition;
-						NewStageRanking.TimeSwim = StageRanking.TimeSwim;
-						NewStageRanking.Bib = StageRanking.Bib;
-						NewStageRanking.Gap = StageRanking.Gap;
-						NewStageRanking.Rank = StageRanking.Rank;
+						NewStageRanking.TimeRun = StageRankingResp.TimeRun;
+						FTimespan StartTimeSpan;
+						FTimespan::Parse(StageRankingResp.TimeStart, StartTimeSpan);
+						NewStageRanking.TimeStart = Contest.Date + StartTimeSpan;
+						NewStageRanking.TimeTransition = StageRankingResp.TimeTransition;
+						NewStageRanking.TimeSwim = StageRankingResp.TimeSwim;
+						NewStageRanking.Bib = StageRankingResp.Bib;
+						NewStageRanking.Gap = StageRankingResp.Gap;
+						NewStageRanking.Rank = StageRankingResp.Rank;
+						NewStageRanking.SpeedRunning = StageRankingResp.SpeedRunning;
+						NewStageRanking.SpeedSwim = StageRankingResp.SpeedSwim;
+						NewStageRanking.SpeedTotal = StageRankingResp.SpeedTotal;
 						Stage.StageRanking.Add(NewStageRanking);
 						Stage.SortStageRanking();
 						// UE_LOG(LogDTFluxAPI, Log,
@@ -414,15 +471,8 @@ void UDTFluxDataStorage::UpdateStageRanking(const FDTFluxStageRankingResponse& S
 void UDTFluxDataStorage::AddSplitSensorResult(FDTFluxSplitSensorItemResponse Response)
 {
 	// Send SplitSensor Result to BP
-	FDTFluxStage CurrentStage;
-	if(GetStage(CurrentStage, Response.StageID))
-	{
-		// this is an empty stage
-		if(CurrentStage.Id == -1 )
-		{
-		
-		}
-	}
+
+
 
 }
 
@@ -470,3 +520,56 @@ const FString UDTFluxDataStorage::GetConcurrentFormatedName(int Bib, bool Trunca
 		return "";
 	};
 }
+
+bool UDTFluxDataStorage::GetFirstStageOfContest(const int ContestId, FDTFluxStage& Stage)
+{
+	if(Contests.IsEmpty())
+	{
+		return false;
+	}
+	for (auto& Contest : Contests)
+	{
+		if(Contest.Id == ContestId)
+		{
+			Contest.Stages.Sort([](const FDTFluxStage& A, const FDTFluxStage& B)
+			{
+				return A.Id < B.Id;
+			});
+			if(Contest.Stages.IsValidIndex(0))
+			{
+				Stage =  Contest.Stages[0];
+				return true;
+			}
+			return false;
+
+		}
+	}
+	return false;
+}
+
+void UDTFluxDataStorage::DumpContest()
+{
+	for(const auto& Contest : Contests)
+	{
+		UE_LOG(LogDTFluxAPI, Warning, TEXT("Contest%02d with name %s : Date %s\n"),
+			Contest.Id, *Contest.Name, *Contest.Date.ToString());
+		// UE_LOG(LogDTFluxAPI, Warning, TEXT("Participants :\n"));
+		// for(const auto& Participant : Contest.Participants)
+		// {
+		// 	Participant.Dump();
+		// }
+		UE_LOG(LogDTFluxAPI, Warning, TEXT("Stages :\n"));
+		for(const auto& Stage : Contest.Stages)
+		{
+			Stage.Dump();
+		}
+		UE_LOG(LogDTFluxAPI, Warning, TEXT("ContestRanking :\n"));
+		for(const auto& ContestRankingItem  : Contest.ContestRanking)
+		{
+			ContestRankingItem.Dump();
+		}
+
+	}
+}
+
+

@@ -39,6 +39,8 @@ public:
 	FString StartTime;
 	UPROPERTY()
 	FString EndTime;
+	UPROPERTY()
+	FString CutOff;
 
 };
 
@@ -54,7 +56,7 @@ public:
 	UPROPERTY()
 	FString Name;
 	UPROPERTY()
-	FString Date;
+	FDateTime Date;
 	UPROPERTY()
 	TArray<FStageResponse> Stages;
 	UPROPERTY()
@@ -124,11 +126,11 @@ public:
 	UPROPERTY();
 	FString TimeStart;
 	UPROPERTY()
-	FString SpeedSwim;
+	float SpeedSwim;
 	UPROPERTY()
-	FString SpeedRunning;
+	float SpeedRunning;
 	UPROPERTY()
-	FString SpeedTotal;
+	float SpeedTotal;
 };
 
 

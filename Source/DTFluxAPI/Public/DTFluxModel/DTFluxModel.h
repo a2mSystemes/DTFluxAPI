@@ -144,7 +144,7 @@ public:
 	FString Gap;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
 	FString Time;
-	void Dump()
+	void Dump () const
 	{
 		UE_LOG(LogDTFluxAPI, Log,
 			TEXT("FDTFluxContestRanking ->> \n \"rank\" : %d, Participant with Bib %d \"Gap\" : %s, \"Time\" : %s "),
@@ -170,13 +170,21 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
 	FString TimeRun;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
-	FString TimeStart;
+	FDateTime TimeStart;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	float SpeedRunning;	
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	float SpeedTotal;	
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	float SpeedSwim;
+	
+	
 
 	void Dump() const
 	{	
 		UE_LOG(LogDTFluxAPI, Log, TEXT("RANKING : %02d. Participant bib %d %s %s %s %s %s"),
 			Rank, Bib, *Gap, *TimeSwim,
-			*TimeTransition, *TimeRun, *TimeStart);
+			*TimeTransition, *TimeRun, *TimeStart.ToString());
 	}
 };
 
@@ -192,12 +200,14 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
 	FString Time;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
-	int Rank;
+	int Rank = 0;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	bool Display = false;
 	void Dump() const
 	{
 		UE_LOG(LogDTFluxAPI, Log, TEXT("SplitGapItem"))
 		// Participant.Dump();
-		UE_LOG(LogDTFluxAPI, Log, TEXT("Bib %02d Gap %s"), Bib, *Gap);
+		UE_LOG(LogDTFluxAPI, Log, TEXT("Bib %02d Rank %02d Gap %s Time %s"), Bib, Rank, *Gap, *Time);
 	}
 };
 
@@ -211,12 +221,12 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
 	FString Name;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
-	TArray<FDTFluxSplitRanking> SplitGaps;
+	TArray<FDTFluxSplitRanking> SplitRankings;
 
 	void Dump() const
 	{
 		UE_LOG(LogDTFluxAPI, Log, TEXT("Split %02d::%s *****\n"), Id, *Name);
-		for(const auto& SplitGapItem : SplitGaps)
+		for(const auto& SplitGapItem : SplitRankings)
 		{
 			SplitGapItem.Dump();
 		}
@@ -227,14 +237,16 @@ public:
 		FDTFluxSplitRanking NewSplitGapItem;
 		NewSplitGapItem.Bib = SplitRankingItemResp.Bib;
 		NewSplitGapItem.Gap = SplitRankingItemResp.Gap;
-		if(SplitGaps.IsEmpty())
+		NewSplitGapItem.Rank = SplitRankingItemResp.Rank;
+		NewSplitGapItem.Time = SplitRankingItemResp.Time;
+		if(SplitRankings.IsEmpty())
 		{
-			SplitGaps.Add(NewSplitGapItem);
+			SplitRankings.Add(NewSplitGapItem);
 			return;
 		}
 		bool Update = true;
 		int Idx = 0;
-		for(auto& SplitGapItem : SplitGaps)
+		for(auto& SplitGapItem : SplitRankings)
 		{
 			if(SplitGapItem.Bib == SplitRankingItemResp.Bib)
 			{
@@ -244,13 +256,46 @@ public:
 		}
 		if(Update)
 		{
-			if(SplitGaps.IsValidIndex(Idx))
+			if(SplitRankings.IsValidIndex(Idx))
 			{
-				SplitGaps.RemoveAt(Idx);
+				SplitRankings.RemoveAt(Idx);
 			}
 		}
-		SplitGaps.Add(NewSplitGapItem);
+		SplitRankings.Add(NewSplitGapItem);
 	};
+
+	void SortByRank()
+	{
+		SplitRankings.Sort([](const FDTFluxSplitRanking& A, const FDTFluxSplitRanking& B)
+		{
+			if(A.Rank == 0 && B.Rank == 0)
+				return true;
+			return A.Rank < B.Rank;
+		});
+	}
+
+	TArray<FDTFluxSplitRanking> GetSplitRanking(const int From = 0, const int DisplayNumber = 0)
+	{
+		TArray<FDTFluxSplitRanking> NewSplitRankings;
+		SortByRank();
+		NewSplitRankings.Append(SplitRankings);
+
+		if(From == 0 && DisplayNumber == 0)
+			return NewSplitRankings;
+		for(auto& SRank : SplitRankings)
+		{
+			if(SRank.Rank >= From)
+			{
+				NewSplitRankings.Add(SRank);
+				if(NewSplitRankings.Num() >= DisplayNumber)
+				{
+					return NewSplitRankings;
+				}
+			}
+		}
+		return NewSplitRankings;
+		
+	}
 };
 
 USTRUCT(BlueprintType, Category="DTFlux|Model")
@@ -266,6 +311,8 @@ public:
 	FDateTime StartTime;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
 	FDateTime EndTime;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
+	FDateTime CutOff;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
 	TArray<FDTFluxSplit> Splits;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|model")
@@ -288,6 +335,31 @@ public:
 			Split.Dump();
 		}
 
+	}
+
+	EDTFluxSplitType GetSplitType(int SplitID)
+	{
+		int SplitCount = Splits.Num();
+		//sort by ID
+		Splits.Sort([](const FDTFluxSplit& A, const FDTFluxSplit& B)
+		{
+			return A.Id < B.Id;
+		});
+		int SplitIndex = Splits.IndexOfByPredicate([SplitID](const FDTFluxSplit& Split)
+		{
+			return Split.Id == SplitID;
+		});
+		
+		if(SplitCount -2 == SplitIndex )
+		{
+			return EDTFluxSplitType::PreFinnishSplit;
+		}
+		if(SplitCount -1 == SplitIndex)
+		{
+			return EDTFluxSplitType::FinishSplit;
+		}
+		return EDTFluxSplitType::NormalSplit;
+		
 	};
 	void SortStageRanking()
 	{
@@ -410,12 +482,9 @@ public:
 				NewRanking.Bib, NewRanking.Rank, Id );
 			return true;
 		}
-		else
-		{
-			ContestRanking.Add(NewRanking);
-			return true;
-		}
-		return false;
+
+		ContestRanking.Add(NewRanking);
+		return true;
 	}
 	void Dump()
 	{
@@ -445,7 +514,7 @@ public:
 };
 
 USTRUCT(BlueprintType, Category="FDTFlux|Model")
-struct FDTFluxFinisher
+struct DTFLUXAPI_API FDTFluxFinisher
 {
 	GENERATED_BODY()
 
@@ -457,9 +526,8 @@ struct FDTFluxFinisher
 	FDTFluxStageRanking CurrentRanking;
 };
 
-
 USTRUCT(BlueprintType, Category="DTFlux|Subsystem|Events")
-struct FDTFluxWsResponseEvent
+struct DTFLUXAPI_API FDTFluxWsResponseEvent
 {
 	GENERATED_BODY()
 
@@ -467,4 +535,28 @@ struct FDTFluxWsResponseEvent
 	TEnumAsByte<EDTFluxResponseType> WsResponseType;
 	UPROPERTY(BlueprintReadOnly, Category="DTFlux|Subsystem|Events")
 	FString RawData;
+};
+
+USTRUCT(BlueprintType, Category="DTFlux|Subsystem|Events")
+struct DTFLUXAPI_API FDTFluxStageFinished
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category="DTFlux|Subsystem|Events")
+	int ContestId = 0;
+	UPROPERTY(BlueprintReadOnly, Category="DTFlux|Subsystem|Events")
+	int StageId = 0;
+	UPROPERTY(BlueprintReadOnly, Category="DTFlux|Subsystem|Events")
+	TArray<FDTFluxStageRanking> Rankings;
+};
+
+USTRUCT(BlueprintType, Category="DTFlux|Subsystem|Events")
+struct DTFLUXAPI_API FDTFluxContestFinished
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category="DTFlux|Subsystem|Events")
+	int ContestId = 0;
+	UPROPERTY(BlueprintReadOnly, Category="DTFlux|Subsystem|Events")
+	TArray<FDTFluxStageRanking> Rankings;
 };

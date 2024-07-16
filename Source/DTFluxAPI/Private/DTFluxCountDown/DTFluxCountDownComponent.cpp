@@ -4,6 +4,7 @@
 #include "DTFluxCountDown/DTFluxCountDownComponent.h"
 
 #include "DTFluxAPILog.h"
+#include "DTFluxSubsystem/DTFluxSubsystem.h"
 
 
 // Sets default values for this component's properties
@@ -12,7 +13,14 @@ UDTFluxCountDownComponent::UDTFluxCountDownComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
+	if(FModuleManager::Get().IsModuleLoaded("DTFluxApi"))
+	{
+		DataStorage = GEngine->GetEngineSubsystem<UDTFluxSubsystem>()->GetDataStorage();
+		UE_LOG(LogDTFluxAPI, Log, TEXT("DTFluxApi loaded"))
+	}else
+	{
+		UE_LOG(LogDTFluxAPI, Error, TEXT("DTFluxApi Not Loaded"))
+	}
 	// ...
 }
 
