@@ -537,6 +537,71 @@ const FString UDTFluxDataStorage::GetConcurrentFormatedName(int Bib, bool Trunca
 	};
 }
 
+// ReSharper disable once IdentifierTypo
+TArray<FDTFluxStageRanking> UDTFluxDataStorage::GetPoursuitWithStageTime(const TArray<int> ContestIds, const int StageId, float DelaTimeSeconds)
+{
+	TArray<int> RemoveIdx;
+	int Idx = 0;
+	TArray<FDTFluxStageRanking> StagesRankingsTemp;
+	TArray<FDTFluxStageRanking> ReturnStageRankings;
+	FDateTime PresumedStartStage;
+	for(const int ContestId : ContestIds)
+	{
+		FDTFluxStage StageTemp;
+		if(GetStage(ContestId, StageId, StageTemp))
+		{
+			PresumedStartStage = StageTemp.StartTime;
+			StagesRankingsTemp .Append(StageTemp.StageRanking);
+			// ContestsRankings
+		}
+	}
+	StagesRankingsTemp.Sort([](const FDTFluxStageRanking& A, const FDTFluxStageRanking& B)
+	{
+		return A.TimeStart > B.TimeStart;
+	});
+	FDateTime MassStartDate = PresumedStartStage + FTimespan::FromSeconds(DelaTimeSeconds) ;
+	for( auto & StageRanking : StagesRankingsTemp)
+	{
+		if ( StageRanking.TimeStart < MassStartDate )
+		{
+			ReturnStageRankings.Add(StageRanking);
+		}
+	}
+	return ReturnStageRankings;
+
+}
+// ReSharper disable once IdentifierTypo
+TArray<FDTFluxStageRanking> UDTFluxDataStorage::GetPoursuitWithTimeStart(const TArray<int> ContestIds, const int StageId, float DelaTimeSeconds)
+{
+	TArray<int> RemoveIdx;
+	int Idx = 0;
+	TArray<FDTFluxStageRanking> StagesRankingsTemp;
+	TArray<FDTFluxStageRanking> ReturnStageRankings;
+	for(const int ContestId : ContestIds)
+	{
+		FDTFluxStage StageTemp;
+		if(GetStage(ContestId, StageId, StageTemp))
+		{
+			StagesRankingsTemp .Append(StageTemp.StageRanking);
+			// ContestsRankings
+		}
+	}
+	StagesRankingsTemp.Sort([](const FDTFluxStageRanking& A, const FDTFluxStageRanking& B)
+	{
+		return A.TimeStart > B.TimeStart;
+	});
+	FDateTime MassStartDate = StagesRankingsTemp[0].TimeStart + FTimespan::FromSeconds(DelaTimeSeconds) ;
+	for( auto & StageRanking : StagesRankingsTemp)
+	{
+		if ( StageRanking.TimeStart < MassStartDate )
+		{
+			ReturnStageRankings.Add(StageRanking);
+		}
+	}
+	return ReturnStageRankings;
+
+}
+
 bool UDTFluxDataStorage::GetFirstStageOfContest(const int ContestId, FDTFluxStage& Stage)
 {
 	if(Contests.IsEmpty())

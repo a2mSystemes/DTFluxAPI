@@ -567,3 +567,14 @@ struct DTFLUXAPI_API FDTFluxContestFinished
 	UPROPERTY(BlueprintReadOnly, Category="DTFlux|Subsystem|Events")
 	TArray<FDTFluxStageRanking> Rankings;
 };
+
+USTRUCT(BlueprintType, Category="DTFlux|Subsystem")
+struct FDTFluxPoursuit
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category="DTFlux|Subsystem")
+	int Bib;
+	UPROPERTY(BlueprintReadOnly, Category="DTFlux|Subsystem")
+	FDateTime TimeStart;
+};

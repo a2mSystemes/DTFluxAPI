@@ -112,6 +112,13 @@ public:
 	void ChangeCurrentContest();
 	UFUNCTION(BlueprintCallable, Category="DTFlux|DataStorage")
 	const FString GetConcurrentFormatedName( int Bib, bool Truncate = true, int MaxSize = 20);
+	UFUNCTION(BlueprintCallable, Category="DTFlux|DataStorage")
+	// ReSharper disable once IdentifierTypo
+	TArray<FDTFluxStageRanking> GetPoursuitWithStageTime(const TArray<int> ContestIds, const int StageId, float DelaTimeSeconds = 300.0f);
+	UFUNCTION(BlueprintCallable, Category="DTFlux|DataStorage")
+	// ReSharper disable once IdentifierTypo
+	TArray<FDTFluxStageRanking> GetPoursuitWithTimeStart(const TArray<int> ContestIds, const int StageId, float DelaTimeSeconds);
+
 	UFUNCTION()
 	bool GetFirstStageOfContest(const int ContestId, FDTFluxStage& Stage);
 	void DumpContest();
