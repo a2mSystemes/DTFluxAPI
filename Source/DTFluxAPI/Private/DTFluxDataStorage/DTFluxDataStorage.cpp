@@ -240,6 +240,22 @@ EDTFluxSplitType UDTFluxDataStorage::GetSplitStatus(int ContestID, int StageID, 
 	return EDTFluxSplitType::UnknownSplitType;
 }
 
+bool UDTFluxDataStorage::GetStageRankingForBib(int ContestID, int StageID, int Bib,
+	FDTFluxStageRanking& OutStageRanking)
+{
+	FDTFluxStage Stage;
+	GetStage(ContestID, StageID, Stage);
+	for(auto& StageRanking : Stage.StageRanking)
+	{
+		if(StageRanking.Bib == Bib )
+		{
+			OutStageRanking = StageRanking;
+			return true;
+		}
+	}
+	return false;
+}
+
 
 TArray<FDTFluxParticipant> UDTFluxDataStorage::GetParticipants(const int ContestId)
 {

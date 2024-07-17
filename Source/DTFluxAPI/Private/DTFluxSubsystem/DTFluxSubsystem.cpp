@@ -500,17 +500,24 @@ void UDTFluxSubsystem::ProcessSplitSensor(const FDTFluxSplitSensorResponse& Spli
 		UE_LOG(LogDTFluxAPI, Log, TEXT("Checking SplitStatus ..."))
 		EDTFluxSplitType SplitType = DataStorage->GetSplitStatus(SplitSensorItem.ContestID,
 			SplitSensorItem.StageID, SplitSensorItem.SplitID);
+		FDTFluxFinisherData Data;
+		Data.Bib = SplitSensorItem.Bib;
+		Data.ContestId = SplitSensorItem.ContestID;
+		Data.StageId = SplitSensorItem.StageID;
+		Data.SplitRanking = NewRanking;
 		switch(SplitType)
 		{
 		case PreFinnishSplit:
+
 			UE_LOG(LogDTFluxAPI, Warning, TEXT("SplitSensor %d for Stage%02d in Contest%02d is a Prefinish Sensor"),
 				SplitSensorItem.SplitID, SplitSensorItem.StageID, SplitSensorItem.ContestID);
-			OnSpotter.Broadcast(NewRanking);
+			OnSpotter.Broadcast(Data);
 			break;
 		case FinishSplit:
 			UE_LOG(LogDTFluxAPI, Warning, TEXT("SplitSensor %d for Stage%02d in Contest%02d is a Finish Sensor"),
 				SplitSensorItem.SplitID, SplitSensorItem.StageID, SplitSensorItem.ContestID);
-			OnFinisher.Broadcast(NewRanking);
+			DataStorage->GetStageRankingForBib(SplitSensorItem.ContestID, SplitSensorItem.StageID, SplitSensorItem.Bib, Data.StageRanking);
+			OnFinisher.Broadcast(Data);
 			break;
 		case NormalSplit:
 			UE_LOG(LogDTFluxAPI, Warning, TEXT("SplitSensor %d for Stage%02d in Contest%02d is a Normal Split"),

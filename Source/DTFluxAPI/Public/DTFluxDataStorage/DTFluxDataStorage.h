@@ -121,4 +121,6 @@ public:
 	FDTFluxSplitRanking AddSplitRanking(const FDTFluxSplitSensorItemResponse& SplitSensorItem);
 	UFUNCTION()
 	EDTFluxSplitType GetSplitStatus(int ContestID, int StageID, int SplitID);
+	
+	bool GetStageRankingForBib(int ContestID, int StageID, int Bib, FDTFluxStageRanking& OutStageRanking);
 };

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
+#include "DTFluxUtils/DTFluxEnums.h"
 #include "DTFluxModelResponse.generated.h"
 
 /**
@@ -22,7 +23,6 @@ public:
 	UPROPERTY()
 	FString Name;
 };
-
 
 USTRUCT(BlueprintType, Category="DTFlux|Model")
 struct DTFLUXAPI_API FStageResponse
@@ -133,7 +133,6 @@ public:
 	float SpeedTotal;
 };
 
-
 USTRUCT()
 struct DTFLUXAPI_API FDTFluxStageRankingResponse
 {
@@ -192,7 +191,6 @@ struct DTFLUXAPI_API FDTFluxStatusUpdateResponse
 };
 
 
-
 USTRUCT(BlueprintType, Category="DTFlux|Model")
 struct DTFLUXAPI_API FDTFluxSplitSensorItemResponse
 {
@@ -215,7 +213,6 @@ struct DTFLUXAPI_API FDTFluxSplitSensorItemResponse
 	int Rank;
 };
 
-
 USTRUCT(BlueprintType, Category="DTFlux|Model")
 struct DTFLUXAPI_API FDTFluxSplitSensorResponse
 {
@@ -226,7 +223,6 @@ struct DTFLUXAPI_API FDTFluxSplitSensorResponse
 	// ReSharper disable once IdentifierTypo
 	TArray<FDTFluxSplitSensorItemResponse> Datas;
 };
-
 
 USTRUCT(BlueprintType, Category="DTFlux|Model")
 struct DTFLUXAPI_API FDTFluxTeamListItemResponse
@@ -276,7 +272,6 @@ public:
 	
 };
 
-
 USTRUCT()
 struct DTFLUXAPI_API FDTFluxTeamUpdateResponse
 {
@@ -288,6 +283,7 @@ struct DTFLUXAPI_API FDTFluxTeamUpdateResponse
 	TArray<FDTFluxTeamListItemResponse> Datas;
 	
 };
+
 USTRUCT()
 struct DTFLUXAPI_API FDTFluxArchSelectResponseItem
 {
@@ -311,4 +307,15 @@ struct DTFLUXAPI_API FDTFluxArchSelectResponse
 	TArray<FDTFluxArchSelectResponseItem> Datas;
 
 	
+};
+
+USTRUCT(BlueprintType, Category="DTFlux|Subsystem|Events")
+struct DTFLUXAPI_API FDTFluxWsResponseEvent
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category="DTFlux|Subsystem|Events")
+	TEnumAsByte<EDTFluxResponseType> WsResponseType;
+	UPROPERTY(BlueprintReadOnly, Category="DTFlux|Subsystem|Events")
+	FString RawData;
 };

@@ -212,6 +212,24 @@ public:
 };
 
 USTRUCT(BlueprintType, Category="DTFlux|Model")
+// ReSharper disable once IdentifierTypo
+struct DTFLUXAPI_API FDTFluxFinisherData
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	int ContestId;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	int StageId;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	int Bib = -1;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	FDTFluxSplitRanking SplitRanking;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	FDTFluxStageRanking StageRanking;
+};
+
+USTRUCT(BlueprintType, Category="DTFlux|Model")
 struct DTFLUXAPI_API FDTFluxSplit
 {
 	GENERATED_BODY()
@@ -524,17 +542,6 @@ struct DTFLUXAPI_API FDTFluxFinisher
 	FDTFluxParticipant Participant;
 	UPROPERTY(BlueprintReadOnly, Category="FDTFlux|Model")
 	FDTFluxStageRanking CurrentRanking;
-};
-
-USTRUCT(BlueprintType, Category="DTFlux|Subsystem|Events")
-struct DTFLUXAPI_API FDTFluxWsResponseEvent
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadOnly, Category="DTFlux|Subsystem|Events")
-	TEnumAsByte<EDTFluxResponseType> WsResponseType;
-	UPROPERTY(BlueprintReadOnly, Category="DTFlux|Subsystem|Events")
-	FString RawData;
 };
 
 USTRUCT(BlueprintType, Category="DTFlux|Subsystem|Events")
