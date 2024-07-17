@@ -312,3 +312,15 @@ struct DTFLUXAPI_API FDTFluxArchSelectResponse
 
 	
 };
+
+
+USTRUCT(BlueprintType, Category="DTFlux|Subsystem|Events")
+struct DTFLUXAPI_API FDTFluxWsResponseEvent
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category="DTFlux|Subsystem|Events")
+	TEnumAsByte<EDTFluxResponseType> WsResponseType;
+	UPROPERTY(BlueprintReadOnly, Category="DTFlux|Subsystem|Events")
+	FString RawData;
+};

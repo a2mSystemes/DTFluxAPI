@@ -526,16 +526,6 @@ struct DTFLUXAPI_API FDTFluxFinisher
 	FDTFluxStageRanking CurrentRanking;
 };
 
-USTRUCT(BlueprintType, Category="DTFlux|Subsystem|Events")
-struct DTFLUXAPI_API FDTFluxWsResponseEvent
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadOnly, Category="DTFlux|Subsystem|Events")
-	TEnumAsByte<EDTFluxResponseType> WsResponseType;
-	UPROPERTY(BlueprintReadOnly, Category="DTFlux|Subsystem|Events")
-	FString RawData;
-};
 
 USTRUCT(BlueprintType, Category="DTFlux|Subsystem|Events")
 struct DTFLUXAPI_API FDTFluxStageFinished
