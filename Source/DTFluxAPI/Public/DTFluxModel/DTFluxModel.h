@@ -164,6 +164,8 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
 	FString Gap;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	FString Time;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
 	FString TimeSwim;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
 	FString TimeTransition;

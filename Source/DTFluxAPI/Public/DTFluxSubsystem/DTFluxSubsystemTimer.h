@@ -34,7 +34,7 @@ public:
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCutoff, TArray<int>, ContestIds, int, StageId);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStageStarted, TArray<int>, ContestIds, int, StageId);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnStageLoading, TArray<int>, ContestIds, int, StageId, int, DelayBeforeStageStart);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRemoveLineRequested, TArray<int>, LineIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRemoveLineRequested, const TArray<int>&, LineIndex);
 
 
 UCLASS(BlueprintType, Category="DTFlux|Timer")
