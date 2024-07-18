@@ -31,9 +31,9 @@ public:
 	FTimerHandle Handle;
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCutoff, int, ContestId, int, StageId);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStageStarted, int, ContestId, int, StageId);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnStageLoading, int, ContestId, int, StageId, int, DelayBeforeStageStart);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCutoff, TArray<int>, ContestIds, int, StageId);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStageStarted, TArray<int>, ContestIds, int, StageId);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnStageLoading, TArray<int>, ContestIds, int, StageId, int, DelayBeforeStageStart);
 
 
 UCLASS(BlueprintType, Category="DTFlux|Timer")
@@ -79,13 +79,13 @@ public:
 	void ClearTimer(const int HandleIndex);
 
 	UFUNCTION(BlueprintCallable, Category="DTFlux|Timer")
-	void TriggerOnCutOff(const int ContestId, const int StageId);
+	void TriggerOnCutOff(const TArray<int> ContestIds, const int StageId);
 
 	UFUNCTION(BlueprintCallable, Category="DTFlux|Timer")
-	void TriggerStartTime(const int ContestId, const int StageId);
+	void TriggerStartTime(const TArray<int> ContestIds, const int StageId);
 	
 	UFUNCTION(BlueprintCallable, Category="DTFlux|Timer")
-	void TriggerStageLoading(const int ContestId, const int StageId, int DelayBeforeStageStart);
+	void TriggerStageLoading(const TArray<int> ContestIds, const int StageId, int DelayBeforeStageStart);
 	static UDTFluxSubsystem* GetDTFluxSubSystem();
 	static UDTFluxDataStorage* GetDTFluxDataStorage();
 

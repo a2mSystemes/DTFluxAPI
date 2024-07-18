@@ -110,7 +110,9 @@ void UDTFluxSubsystemTimer::OnStartTimer()
 			{
 				if(World->GetTimerManager().GetTimerRemaining(Timer.Handle) == 0)
 				{
-					OnStageStarted.Broadcast(Timer.ContestId, Timer.StageId);
+					TArray<int> ContestIds;
+					ContestIds.Add(Timer.ContestId);
+					OnStageStarted.Broadcast(ContestIds, Timer.StageId);
 					break;
 				}
 			}
@@ -134,7 +136,9 @@ void UDTFluxSubsystemTimer::OnCutOffTimer()
 			{
 				if(World->GetTimerManager().GetTimerRemaining(Timer.Handle) == 0)
 				{
-					OnCutoff.Broadcast(Timer.ContestId, Timer.StageId);
+					TArray<int> ContestIds;
+					ContestIds.Add(Timer.ContestId);
+					OnCutoff.Broadcast(ContestIds, Timer.StageId);
 					break;
 				}
 			}
@@ -164,19 +168,20 @@ void UDTFluxSubsystemTimer::ClearTimer(const int HandleIndex)
 {
 }
 
-void UDTFluxSubsystemTimer::TriggerOnCutOff(const int ContestId, const int StageId)
+
+void UDTFluxSubsystemTimer::TriggerOnCutOff(const TArray<int> ContestIds, const int StageId)
 {
-		OnCutoff.Broadcast(ContestId, StageId);
+		OnCutoff.Broadcast(ContestIds, StageId);
 }
 
-void UDTFluxSubsystemTimer::TriggerStartTime(const int ContestId, const int StageId)
+void UDTFluxSubsystemTimer::TriggerStartTime(const TArray<int> ContestIds, const int StageId)
 {
-		OnStageStarted.Broadcast(ContestId, StageId);
+		OnStageStarted.Broadcast(ContestIds, StageId);
 }
 
-void UDTFluxSubsystemTimer::TriggerStageLoading(const int ContestId, const int StageId, int DelayBeforeStageStart)
+void UDTFluxSubsystemTimer::TriggerStageLoading(const TArray<int> ContestIds, const int StageId, int DelayBeforeStageStart)
 {
-		OnStageLoading.Broadcast(ContestId, StageId, DelayBeforeStageStart);
+		OnStageLoading.Broadcast(ContestIds, StageId, DelayBeforeStageStart);
 }
 
 UDTFluxSubsystem* UDTFluxSubsystemTimer::GetDTFluxSubSystem()
