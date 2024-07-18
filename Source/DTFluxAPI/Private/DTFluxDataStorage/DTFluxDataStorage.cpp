@@ -463,6 +463,7 @@ void UDTFluxDataStorage::UpdateStageRanking(const FDTFluxStageRankingResponse& S
 						NewStageRanking.TimeRun = StageRankingResp.TimeRun;
 						FTimespan StartTimeSpan;
 						FTimespan::Parse(StageRankingResp.TimeStart, StartTimeSpan);
+						NewStageRanking.Time = StageRankingResp.Time;
 						NewStageRanking.TimeStart = Contest.Date + StartTimeSpan;
 						NewStageRanking.TimeTransition = StageRankingResp.TimeTransition;
 						NewStageRanking.TimeSwim = StageRankingResp.TimeSwim;

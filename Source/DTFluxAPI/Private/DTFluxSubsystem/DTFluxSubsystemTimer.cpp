@@ -169,22 +169,22 @@ void UDTFluxSubsystemTimer::ClearTimer(const int HandleIndex)
 }
 
 
-void UDTFluxSubsystemTimer::TriggerOnCutOff(const TArray<int> ContestIds, const int StageId)
+void UDTFluxSubsystemTimer::TriggerOnCutOff(const TArray<int>& ContestIds, const int StageId)
 {
 		OnCutoff.Broadcast(ContestIds, StageId);
 }
 
-void UDTFluxSubsystemTimer::TriggerStartTime(const TArray<int> ContestIds, const int StageId)
+void UDTFluxSubsystemTimer::TriggerStartTime(const TArray<int>& ContestIds, const int StageId)
 {
 		OnStageStarted.Broadcast(ContestIds, StageId);
 }
 
-void UDTFluxSubsystemTimer::TriggerStageLoading(const TArray<int> ContestIds, const int StageId, int DelayBeforeStageStart)
+void UDTFluxSubsystemTimer::TriggerStageLoading(const TArray<int>& ContestIds, const int StageId, int DelayBeforeStageStart)
 {
 		OnStageLoading.Broadcast(ContestIds, StageId, DelayBeforeStageStart);
 }
 
-void UDTFluxSubsystemTimer::TriggerOnDeleteRequested(const TArray<int> LineIndex)
+void UDTFluxSubsystemTimer::TriggerOnDeleteRequested(const TArray<int>& LineIndex)
 {
 	OnRemoveLineRequested.Broadcast(LineIndex);
 }
