@@ -34,6 +34,7 @@ public:
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCutoff, TArray<int>, ContestIds, int, StageId);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStageStarted, TArray<int>, ContestIds, int, StageId);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnStageLoading, TArray<int>, ContestIds, int, StageId, int, DelayBeforeStageStart);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRemoveLineRequested, TArray<int>, LineIndex);
 
 
 UCLASS(BlueprintType, Category="DTFlux|Timer")
@@ -67,6 +68,9 @@ public:
 	UPROPERTY(BlueprintAssignable, Category="DTFlux|Timer")
 	FOnStageLoading OnStageLoading;
 
+	UPROPERTY(BlueprintAssignable, Category="DTFlux|Timer")
+	FOnRemoveLineRequested OnRemoveLineRequested;
+
 	UFUNCTION()
 	void OnDataStorageInit();
 
@@ -85,7 +89,10 @@ public:
 	void TriggerStartTime(const TArray<int> ContestIds, const int StageId);
 	
 	UFUNCTION(BlueprintCallable, Category="DTFlux|Timer")
-	void TriggerStageLoading(const TArray<int> ContestIds, const int StageId, int DelayBeforeStageStart);
+	void TriggerStageLoading(const TArray<int> ContestIds, const int StageId, int DelayBeforeStageStart);	
+	UFUNCTION(BlueprintCallable, Category="DTFlux|Timer")
+	void TriggerOnDeleteRequested(const TArray<int> LineIndex);
+
 	static UDTFluxSubsystem* GetDTFluxSubSystem();
 	static UDTFluxDataStorage* GetDTFluxDataStorage();
 

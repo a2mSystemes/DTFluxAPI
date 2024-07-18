@@ -184,6 +184,11 @@ void UDTFluxSubsystemTimer::TriggerStageLoading(const TArray<int> ContestIds, co
 		OnStageLoading.Broadcast(ContestIds, StageId, DelayBeforeStageStart);
 }
 
+void UDTFluxSubsystemTimer::TriggerOnDeleteRequested(const TArray<int> LineIndex)
+{
+	OnRemoveLineRequested.Broadcast(LineIndex);
+}
+
 UDTFluxSubsystem* UDTFluxSubsystemTimer::GetDTFluxSubSystem()
 {
 	return GEngine->GetEngineSubsystem<UDTFluxSubsystem>();
