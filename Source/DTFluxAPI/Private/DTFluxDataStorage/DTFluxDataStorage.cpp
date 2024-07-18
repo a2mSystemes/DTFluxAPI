@@ -590,7 +590,12 @@ TArray<FDTFluxStageRanking> UDTFluxDataStorage::GetPoursuitWithTimeStart(const T
 	{
 		return A.TimeStart > B.TimeStart;
 	});
-	FDateTime MassStartDate = StagesRankingsTemp[0].TimeStart + FTimespan::FromSeconds(DelaTimeSeconds) ;
+	FDateTime MassStartDate;
+	if (!StagesRankingsTemp.IsEmpty())
+	{
+		MassStartDate = StagesRankingsTemp[0].TimeStart + FTimespan::FromSeconds(DelaTimeSeconds) ;
+
+	}
 	for( auto & StageRanking : StagesRankingsTemp)
 	{
 		if ( StageRanking.TimeStart < MassStartDate )
