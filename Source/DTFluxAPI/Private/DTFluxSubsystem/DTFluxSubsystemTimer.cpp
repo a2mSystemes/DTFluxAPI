@@ -9,9 +9,9 @@
 void UDTFluxSubsystemTimer::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-
-	UDTFluxSubsystem* Subsystem = GetDTFluxSubSystem();
-	Subsystem->OnRaceDataReceived.AddDynamic(this, &UDTFluxSubsystemTimer::OnDataStorageInit);
+	// Not Necessary Anymore
+	// UDTFluxSubsystem* Subsystem = GetDTFluxSubSystem();
+	// Subsystem->OnRaceDataReceived.AddDynamic(this, &UDTFluxSubsystemTimer::OnDataStorageInit);
 
 }
 
@@ -31,7 +31,6 @@ void UDTFluxSubsystemTimer::OnDataStorageInit()
 {
 	UE_LOG(LogDTFluxAPI, Log, TEXT("DataStorage Has been Set Or Updated"));
 	UDTFluxDataStorage* DataStorage = GetDTFluxDataStorage();
-
 	for(const auto&Contest : DataStorage->Contests)
 	{
 		for (const auto& Stage: Contest.Stages)
@@ -40,7 +39,6 @@ void UDTFluxSubsystemTimer::OnDataStorageInit()
 			UWorld* World = GetWorld();
 			if(World)
 			{
-
 				FDTFluxContestTimerHandle StartContestTimerHandle;
 				StartContestTimerHandle.Type = EDTFluxTimerEventType::StageStart;
 				StartContestTimerHandle.ContestId = Contest.Id;
@@ -69,10 +67,7 @@ void UDTFluxSubsystemTimer::OnDataStorageInit()
 			}
 			
 		}
-
-		
 	}
-	
 }
 
 void UDTFluxSubsystemTimer::AddCutoffTimer(const int ContestID, const int StageID)
@@ -105,7 +100,6 @@ void UDTFluxSubsystemTimer::AddStageStartedTimer(const int ContestID, const int 
 
 void UDTFluxSubsystemTimer::OnStartTimer()
 {
-	
 	UWorld* World = GetWorld();
 	if(World)
 	{
@@ -127,7 +121,6 @@ void UDTFluxSubsystemTimer::OnStartTimer()
 			Timers.RemoveAt(Idx);
 		}
 	}
-
 }
 void UDTFluxSubsystemTimer::OnCutOffTimer()
 {
@@ -169,6 +162,21 @@ void UDTFluxSubsystemTimer::ClearTimer(FDTFluxContestTimerHandle TimerHandle)
 
 void UDTFluxSubsystemTimer::ClearTimer(const int HandleIndex)
 {
+}
+
+void UDTFluxSubsystemTimer::TriggerOnCutOff(const int ContestId, const int StageId)
+{
+		OnCutoff.Broadcast(ContestId, StageId);
+}
+
+void UDTFluxSubsystemTimer::TriggerStartTime(const int ContestId, const int StageId)
+{
+		OnStageStarted.Broadcast(ContestId, StageId);
+}
+
+void UDTFluxSubsystemTimer::TriggerStageLoading(const int ContestId, const int StageId, int DelayBeforeStageStart)
+{
+		OnStageLoading.Broadcast(ContestId, StageId, DelayBeforeStageStart);
 }
 
 UDTFluxSubsystem* UDTFluxSubsystemTimer::GetDTFluxSubSystem()
