@@ -187,5 +187,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category="DTFlux|subsystem")
 	bool IsConnected() const;
 
+	UFUNCTION(BlueprintCallable, Category="DTFlux|Subsystem")
+	TArray<FDTFluxSplitRanking> SortByRank(TArray<FDTFluxSplitRanking> SplitRankingArray);
 };
 

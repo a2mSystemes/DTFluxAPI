@@ -543,3 +543,11 @@ void UDTFluxSubsystem::ProcessArchSelect(FDTFluxArchSelectResponseItem ArchSelec
 	OnArchSelect.Broadcast(ArchSelectResponse.ContestId, ArchSelectResponse.StageId);
 }
 
+TArray<FDTFluxSplitRanking> UDTFluxSubsystem::SortByRank(TArray<FDTFluxSplitRanking> SplitRankingArray)
+{
+	SplitRankingArray.Sort([](const FDTFluxSplitRanking& A, const FDTFluxSplitRanking& B )
+{
+	return A.Rank < B.Rank;
+});
+	return SplitRankingArray;
+}
