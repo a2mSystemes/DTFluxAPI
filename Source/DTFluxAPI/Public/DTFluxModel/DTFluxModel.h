@@ -198,6 +198,12 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
 	int Bib;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	int ContestId = 0;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	int StageId = 0;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
+	int SplitId = 0;
+	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
 	FString Gap;
 	UPROPERTY(BlueprintReadWrite, Category="DTFlux|Model")
 	FString Time;

@@ -214,6 +214,9 @@ FDTFluxSplitRanking UDTFluxDataStorage::AddSplitRanking(const FDTFluxSplitSensor
 	NewSplitRanking.Gap = SplitSensorItem.Gap;
 	NewSplitRanking.Rank = SplitSensorItem.Rank;
 	NewSplitRanking.Time = SplitSensorItem.Time;
+	NewSplitRanking.ContestId = SplitSensorItem.ContestID;
+	NewSplitRanking.StageId = SplitSensorItem.StageID;
+	NewSplitRanking.SplitId = SplitSensorItem.SplitID;
 	FDTFluxSplit Split;
 	if(GetSplit(SplitSensorItem.ContestID, SplitSensorItem.StageID,
 		SplitSensorItem.SplitID, Split))
