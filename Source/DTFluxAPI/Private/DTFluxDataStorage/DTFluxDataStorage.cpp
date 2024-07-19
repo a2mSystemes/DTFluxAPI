@@ -295,7 +295,7 @@ TArray<FDTFluxStageRanking> UDTFluxDataStorage::GetStageRanking(const int Contes
 	{
 		Stage.StageRanking.Sort([](FDTFluxStageRanking A, FDTFluxStageRanking B)
 		{
-			return A.Rank > B.Rank;
+			return A.Rank < B.Rank;
 		});
 		return Stage.StageRanking;
 	}
