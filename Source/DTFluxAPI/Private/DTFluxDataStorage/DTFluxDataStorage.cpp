@@ -289,16 +289,17 @@ void UDTFluxDataStorage::GetParticipant(const int ContestID, const int Participa
 
 TArray<FDTFluxStageRanking> UDTFluxDataStorage::GetStageRanking(const int ContestId, const int StageId)
 {
-	if(Contests.Num() > (ContestId -1))
+	TArray<FDTFluxStageRanking> StageRanking;
+	FDTFluxStage Stage;
+	if(GetStage(ContestId, StageId, Stage))
 	{
-		FDTFluxContest Contest = Contests[ContestId - 1];
-		if(Contest.Stages.Num() > (StageId -1))
+		Stage.StageRanking.Sort([](FDTFluxStageRanking A, FDTFluxStageRanking B)
 		{
-			FDTFluxStage Stage = Contest.Stages[StageId - 1];
-			return Stage.StageRanking;
-		}
+			return A.Rank > B.Rank;
+		});
+		return Stage.StageRanking;
 	}
-	return TArray<FDTFluxStageRanking>();
+	return StageRanking;
 }
 
 void UDTFluxDataStorage::AddOrUpdateContest(const FDTFluxContestResponse& ContestResponse)
