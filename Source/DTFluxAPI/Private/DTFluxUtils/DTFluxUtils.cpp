@@ -83,3 +83,12 @@ FString UDTFluxModelHelper::GetCurrentStageName(UDTFluxDataStorage* DataStorage)
 	}
 	return Name;
 }
+
+void UDTFluxModelHelper::SortByRank(TArray<FDTFluxSplitRanking>& SplitRankingArray)
+{
+
+	SplitRankingArray.Sort([](const FDTFluxSplitRanking A, const FDTFluxSplitRanking B )
+	{
+		return A.Rank < B.Rank;
+	});
+}
