@@ -120,5 +120,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category="DTFlux|Model|Helpers")
 	static EDTFluxStageStatusType GetStatusType(const int ContestID, const int StageID, UDTFluxDataStorage* DataStorage);
 
+
+	UFUNCTION(BlueprintCallable, Category="DTFlux|Model|Helpers")
+	static int GetCurrentContest(UDTFluxDataStorage* DataStorage);
+	
+	UFUNCTION(BlueprintCallable, Category="DTFlux|Model|Helpers")
+	static TArray<int> GetCurrentStage(UDTFluxDataStorage* DataStorage);
+
+		UFUNCTION(BlueprintCallable, Category="DTFlux|Model|Helpers")
+	static FString GetCurrentStageName(UDTFluxDataStorage* DataStorage);
+
 	
 };
