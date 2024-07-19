@@ -131,6 +131,6 @@ public:
 	static FString GetCurrentStageName(UDTFluxDataStorage* DataStorage);
 	
 	UFUNCTION(BlueprintCallable, Category="DTFlux|Model|Helpers")
-	static void SortByRank(TArray<FDTFluxSplitRanking>& SplitRankingArray);
+	static TArray<FDTFluxSplitRanking> SortByRank(TArray<FDTFluxSplitRanking> SplitRankingArray);
 	
 };
