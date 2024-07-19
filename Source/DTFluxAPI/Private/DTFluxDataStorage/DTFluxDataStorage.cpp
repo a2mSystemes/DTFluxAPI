@@ -559,7 +559,7 @@ TArray<FDTFluxStageRanking> UDTFluxDataStorage::GetPoursuitWithStageTime(const T
 	}
 	StagesRankingsTemp.Sort([](const FDTFluxStageRanking& A, const FDTFluxStageRanking& B)
 	{
-		return A.TimeStart > B.TimeStart;
+		return A.TimeStart < B.TimeStart;
 	});
 	FDateTime MassStartDate = PresumedStartStage + FTimespan::FromSeconds(DelaTimeSeconds) ;
 	for( auto & StageRanking : StagesRankingsTemp)
@@ -590,7 +590,7 @@ TArray<FDTFluxStageRanking> UDTFluxDataStorage::GetPoursuitWithTimeStart(const T
 	}
 	StagesRankingsTemp.Sort([](const FDTFluxStageRanking& A, const FDTFluxStageRanking& B)
 	{
-		return A.TimeStart > B.TimeStart;
+		return A.TimeStart < B.TimeStart;
 	});
 	FDateTime MassStartDate;
 	if (!StagesRankingsTemp.IsEmpty())
