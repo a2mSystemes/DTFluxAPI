@@ -16,7 +16,32 @@
 	"Installed": false,
 	"Modules": [
 		{
-			"Name": "DTFluxAPI",
+			"Name": "DTFluxCore",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "DTFluxAssetsEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "DTFluxProjectSettings",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "DTFluxNetwork",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "DTFluxCoreSubsystem",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "DTFluxUtilities",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
 		}
